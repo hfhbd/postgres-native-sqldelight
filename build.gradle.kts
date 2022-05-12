@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import org.jetbrains.kotlin.konan.target.*
 
 plugins {
     kotlin("multiplatform") version "1.7.0-Beta"
@@ -19,18 +20,21 @@ kotlin {
         }
     }
 
-    macosX64 {
-        config()
+    when (HostManager.host) {
+        KonanTarget.MACOS_ARM64 -> {
+            macosArm64 { config() }
+        }
+        KonanTarget.MACOS_X64 -> {
+            macosX64 { config() }
+        }
+        KonanTarget.LINUX_X64 -> {
+            linuxX64 { config() }
+        }
+        KonanTarget.MINGW_X64 -> {
+            mingwX64 { config() }
+        }
+        else -> error("Not yet supported")
     }
-    macosArm64 {
-        config()
-    }
-    linuxX64 {
-        config()
-    }
-    /*mingwX64 {
-        config()
-    }*/
 
     sourceSets {
         commonMain {

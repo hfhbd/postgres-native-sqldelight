@@ -14,8 +14,6 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         require(PQstatus(conn) == ConnStatusType.CONNECTION_OK) {
             conn.error()
         }
-        /* Set always-secure search path, so malicious users can't take control. */
-        conn.exec("SELECT pg_catalog.set_config('search_path', '', false)")
     }
 
     override fun addListener(listener: Query.Listener, queryKeys: Array<String>) {
@@ -89,6 +87,8 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): R {
+        val cursorName = identifier?.toString() ?: "myCursor"
+        val cursor = "DECLARE $cursorName CURSOR FOR"
         val preparedStatement = if (parameters != 0) {
             Prepared(parameters).apply {
                 if (binders != null) {
@@ -97,17 +97,14 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
             }
         } else null
         val result = if (identifier != null) {
-            require(
-                PQsendPrepare(
-                    conn,
-                    stmtName = identifier.toString(), query = sql, nParams = parameters,
-                    paramTypes = preparedStatement?.types?.refTo(0)
-                ) == 1
-            ) {
-                conn.error()
-            }
+            PQprepare(
+                conn,
+                stmtName = identifier.toString(), query = "$cursor $sql", nParams = parameters,
+                paramTypes = preparedStatement?.types?.refTo(0)
+            ).check().clear()
+            conn.exec("BEGIN")
             memScoped {
-                PQsendQueryPrepared(
+                PQexecPrepared(
                     conn,
                     stmtName = identifier.toString(),
                     nParams = parameters,
@@ -118,10 +115,11 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
                 )
             }
         } else {
+            conn.exec("BEGIN")
             memScoped {
-                PQsendQueryParams(
+                PQexecParams(
                     conn,
-                    command = sql,
+                    command = "$cursor $sql",
                     nParams = parameters,
                     paramValues = preparedStatement?.values(this),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
@@ -130,10 +128,9 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
                     resultFormat = TEXT_RESULT_FORMAT
                 )
             }
-        }
-        require(result == 1) { conn.error() }
-        require(PQsetSingleRowMode(conn) == 1) { conn.error() }
-        return Cursor().use(mapper)
+        }.check()
+
+        return Cursor(result, cursorName).use(mapper)
     }
 
     internal companion object {
@@ -159,22 +156,27 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
     }
 
     private fun CPointer<PGconn>.exec(sql: String) {
-        PQexec(this, sql).check().clear()
+        val result = PQexec(this, sql)
+        result.check()
+        result.clear()
     }
 
     private fun CPointer<PGresult>?.check(): CPointer<PGresult> {
-        require(PQresultStatus(this) == PGRES_TUPLES_OK) {
+        val status = PQresultStatus(this)
+        require(status == PGRES_TUPLES_OK || status == PGRES_COMMAND_OK) {
             conn.error()
         }
         return this!!
     }
 
-    private inner class Cursor : SqlCursor, Closeable {
-        private var currentRow = -1 // rows start at 0, and next is called at start
-        private var result: CPointer<PGresult>? = null
-
+    /**
+     * Must be inside a transaction!
+     */
+    private inner class Cursor(var result: CPointer<PGresult>, val name: String) : SqlCursor, Closeable {
         override fun close() {
-            result?.clear()
+            result.clear()
+            conn.exec("CLOSE $name")
+            conn.exec("END")
         }
 
         override fun getBoolean(index: Int) = getString(index)?.toBoolean()
@@ -186,22 +188,18 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         override fun getLong(index: Int) = getString(index)?.toLong()
 
         override fun getString(index: Int): String? {
-            val isNull = PQgetisnull(result, tup_num = currentRow, field_num = index) == 1
+            val isNull = PQgetisnull(result, tup_num = 0, field_num = index) == 1
             return if (isNull) {
                 null
             } else {
-                PQgetvalue(result, tup_num = currentRow, field_num = index)!!.toKString()
+                val value = PQgetvalue(result, tup_num = 0, field_num = index)
+                value!!.toKString()
             }
         }
 
         override fun next(): Boolean {
-            val next = PQgetResult(conn)
-            return if (next != null) {
-                result.clear()
-                result = next
-                currentRow++
-                true
-            } else false
+            result = PQexec(conn, "FETCH NEXT IN $name").check()
+            return PQcmdTuples(result)!!.toKString().toInt() == 1
         }
     }
 
