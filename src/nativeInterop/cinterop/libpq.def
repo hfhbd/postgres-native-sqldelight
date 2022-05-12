@@ -1,0 +1,11 @@
+headers = libpq-fe.h
+headerFilter = *
+package = libpq
+#staticLibraries = libpq.a
+#libraryPaths = /opt/homebrew/opt/libpq/lib
+
+compilerOpts.osx = -I/opt/homebrew/opt/libpq/include
+linkerOpts.osx = -L/opt/homebrew/opt/libpq/lib -lpq
+
+compilerOpts.linux = -I/usr/include -I/usr/include/x86_64-linux-gnu -I/opt/homebrew/opt/libpq/include
+linkerOpts.linux = -L/usr/lib/x86_64-linux-gnu -L/opt/homebrew/opt/libpq/lib -lpq
