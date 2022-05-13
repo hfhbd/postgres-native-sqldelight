@@ -38,4 +38,4 @@ jobs:
           distribution: 'adopt'
           java-version: 11
       - run: ./gradlew assemble
-      - run: ./gradlew test
+      - run: ./gradlew allTests
