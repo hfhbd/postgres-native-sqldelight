@@ -41,3 +41,7 @@ jobs:
       - run: ./gradlew allTests
         env:
           POSTGRES_HOST: postgres
+      - uses: actions/upload-artifact@v3
+        with:
+          path: build/reports/tests
+        if: failure()
