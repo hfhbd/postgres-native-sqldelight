@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ] #, windows-latest ]
+        os: [ ubuntu-latest ] #, macos-latest ] #, windows-latest ]
     runs-on: ${{ matrix.os }}
     # Service containers to run with `container-job`
     services:
@@ -28,6 +28,9 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
 
     steps:
       - uses: actions/checkout@v3
@@ -39,8 +42,6 @@ jobs:
           java-version: 11
       - run: ./gradlew assemble
       - run: ./gradlew allTests
-        env:
-          POSTGRES_HOST: postgres
       - uses: actions/upload-artifact@v3
         with:
           path: build/reports/tests
