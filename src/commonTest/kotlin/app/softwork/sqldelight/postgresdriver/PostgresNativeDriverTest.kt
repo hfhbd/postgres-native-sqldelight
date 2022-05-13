@@ -1,12 +1,15 @@
 package app.softwork.sqldelight.postgresdriver
 
+import kotlinx.cinterop.*
+import platform.posix.*
 import kotlin.test.*
 
 class PostgresNativeDriverTest {
     @Test
     fun simpleTest() {
+        val postgresHost = getenv("POSTGRES_HOST")?.toKString() ?: "localhost"
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = postgresHost,
             port = 5432,
             user = "postgres",
             database = "postgres",

@@ -39,3 +39,5 @@ jobs:
           java-version: 11
       - run: ./gradlew assemble
       - run: ./gradlew allTests
+        env:
+          POSTGRES_HOST: postgres
