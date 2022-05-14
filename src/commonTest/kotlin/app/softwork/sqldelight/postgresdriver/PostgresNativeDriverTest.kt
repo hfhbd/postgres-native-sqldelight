@@ -12,37 +12,109 @@ class PostgresNativeDriverTest {
             database = "postgres",
             password = "password"
         )
-        driver.execute(null, "DROP TABLE IF EXISTS foo;", parameters = 0)
-        driver.execute(null, "CREATE TABLE foo(a int primary key, bar text);", parameters = 0)
+        assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS baz;", parameters = 0))
+        assertEquals(0, driver.execute(null, "CREATE TABLE baz(a int primary key, foo text, b bytea);", parameters = 0))
         repeat(5) {
-            driver.execute(null, "INSERT INTO foo VALUES ($it, 'a')", parameters = 0)
-        }
-        repeat(5) {
-            driver.execute(null, "INSERT INTO foo VALUES ($1, $2)", parameters = 2) {
-                bindLong(0, 5 + it.toLong())
-                bindString(1, "bar $it")
-            }
+            val result = driver.execute(null, "INSERT INTO baz VALUES ($it)", parameters = 0)
+            assertEquals(1, result)
         }
 
-        assertEquals(1, driver.execute(null, "SELECT * from foo limit 1;", parameters = 0))
-        val s = driver.executeQuery(
-            null,
-            sql = "SELECT * FROM foo;",
+        val result = driver.execute(null, "INSERT INTO baz VALUES ($1, $2, $3), ($4, $5, $6)", parameters = 6) {
+            bindLong(0, 5)
+            bindString(1, "bar 0")
+            bindBytes(2, byteArrayOf(1.toByte(), 2.toByte()))
+
+            bindLong(3, 6)
+            bindString(4, "bar 1")
+            bindBytes(5, null)
+        }
+        assertEquals(2, result)
+        val notPrepared = driver.executeQuery(null, "SELECT * from baz limit 1;", parameters = 0, mapper = {
+            assertTrue(it.next())
+            Simple(
+                index = it.getLong(0)!!.toInt(),
+                name = it.getString(1),
+                byteArray = it.getBytes(2)
+            )
+        })
+        assertEquals(Simple(0, null, null), notPrepared)
+        val preparedStatement = driver.executeQuery(
+            42,
+            sql = "SELECT * FROM baz;",
             parameters = 0, binders = null,
             mapper = {
                 buildList {
                     while (it.next()) {
                         add(
-                            S(
-                                index = it.getLong(0)!!,
-                                name = it.getString(1)!!
+                            Simple(
+                                index = it.getLong(0)!!.toInt(),
+                                name = it.getString(1),
+                                byteArray = it.getBytes(2)
                             )
                         )
                     }
                 }
             })
-        assertEquals(10, s.size)
+        assertEquals(
+            List(5) {
+                Simple(it, null, null)
+            } + listOf(
+                Simple(5, "bar 0", byteArrayOf(1.toByte(), 2.toByte())),
+                Simple(6, "bar 1", null),
+            ),
+            preparedStatement
+        )
     }
 
-    data class S(val index: Long, val name: String)
+    data class Simple(val index: Int, val name: String?, val byteArray: ByteArray?) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+
+            other as Simple
+
+            if (index != other.index) return false
+            if (name != other.name) return false
+            if (byteArray != null) {
+                if (other.byteArray == null) return false
+                if (!byteArray.contentEquals(other.byteArray)) return false
+            } else if (other.byteArray != null) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = index.hashCode()
+            result = 31 * result + (name?.hashCode() ?: 0)
+            result = 31 * result + (byteArray?.contentHashCode() ?: 0)
+            return result
+        }
+    }
+
+    @Test
+    fun wrongCredentials() {
+        assertFailsWith<IllegalArgumentException> {
+            PostgresNativeDriver(
+                host = "wrongHost",
+                user = "postgres",
+                database = "postgres",
+                password = "password"
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            PostgresNativeDriver(
+                host = "localhost",
+                user = "postgres",
+                database = "postgres",
+                password = "wrongPassword"
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            PostgresNativeDriver(
+                host = "localhost",
+                user = "wrongUser",
+                database = "postgres",
+                password = "password"
+            )
+        }
+    }
 }
