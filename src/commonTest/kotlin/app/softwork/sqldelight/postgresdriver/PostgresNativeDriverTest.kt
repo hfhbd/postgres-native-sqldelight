@@ -26,7 +26,7 @@ class PostgresNativeDriverTest {
 
             bindLong(3, 6)
             bindString(4, "bar 1")
-            bindBytes(5, null)
+            bindBytes(5, byteArrayOf(16.toByte(), 12.toByte()))
         }
         assertEquals(2, result)
         val notPrepared = driver.executeQuery(null, "SELECT * from baz limit 1;", parameters = 0, mapper = {
@@ -60,7 +60,7 @@ class PostgresNativeDriverTest {
                 Simple(it, null, null)
             } + listOf(
                 Simple(5, "bar 0", byteArrayOf(1.toByte(), 2.toByte())),
-                Simple(6, "bar 1", null),
+                Simple(6, "bar 1", byteArrayOf(16.toByte(), 12.toByte())),
             ),
             preparedStatement
         )
