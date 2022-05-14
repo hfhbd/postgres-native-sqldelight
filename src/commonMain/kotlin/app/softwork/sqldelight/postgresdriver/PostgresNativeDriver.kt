@@ -56,7 +56,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
                     paramValues = preparedStatement?.values(this),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT
+                    resultFormat = BINARY_RESULT_FORMAT
                 )
             }
         } else {
@@ -68,7 +68,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
                     paramValues = preparedStatement?.values(this),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT,
+                    resultFormat = BINARY_RESULT_FORMAT,
                     paramTypes = preparedStatement?.types?.refTo(0)
                 )
             }
@@ -85,7 +85,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): R {
-        val cursorName = identifier?.toString() ?: "myCursor"
+        val cursorName = if (identifier == null) "myCursor" else "cursor$identifier"
         val cursor = "DECLARE $cursorName CURSOR FOR"
         val preparedStatement = if (parameters != 0) {
             PostgresPreparedStatement(parameters).apply {
@@ -109,7 +109,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
                     paramValues = preparedStatement?.values(this),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
                     paramFormats = preparedStatement?.formats?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT
+                    resultFormat = BINARY_RESULT_FORMAT
                 )
             }
         } else {
@@ -123,7 +123,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
                     paramLengths = preparedStatement?.lengths?.refTo(0),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramTypes = preparedStatement?.types?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT
+                    resultFormat = BINARY_RESULT_FORMAT
                 )
             }
         }.check(conn)
@@ -179,7 +179,7 @@ private fun CPointer<PGconn>.exec(sql: String) {
 
 private fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresult> {
     val status = PQresultStatus(this)
-    require(status == PGRES_TUPLES_OK || status == PGRES_COMMAND_OK) {
+    check(status == PGRES_TUPLES_OK || status == PGRES_COMMAND_OK) {
         conn.error()
     }
     return this!!
@@ -192,8 +192,7 @@ class PostgresCursor(
     private var result: CPointer<PGresult>,
     private val name: String,
     private val conn: CPointer<PGconn>
-) :
-    SqlCursor, Closeable {
+) : SqlCursor, Closeable {
     override fun close() {
         result.clear()
         conn.exec("CLOSE $name")
@@ -202,7 +201,36 @@ class PostgresCursor(
 
     override fun getBoolean(index: Int) = getString(index)?.toBoolean()
 
-    override fun getBytes(index: Int) = getString(index)?.encodeToByteArray()
+    override fun getBytes(index: Int): ByteArray? {
+        val isNull = PQgetisnull(result, tup_num = 0, field_num = index) == 1
+        return if (isNull) {
+            null
+        } else {
+            val bytes = PQgetvalue(result, tup_num = 0, field_num = index)!!
+            val length = PQgetlength(result, tup_num = 0, field_num = index)
+            bytes.fromHex(length)
+        }
+    }
+
+    private inline fun Int.fromHex(): Int = if (this in 48..57) {
+        this - 48
+    } else {
+        this - 97
+    }
+
+    // because "normal" CPointer<ByteVar>.toByteArray() functions does not support hex (2 Bytes) bytes
+    private fun CPointer<ByteVar>.fromHex(length: Int): ByteArray {
+        val array = ByteArray((length - 2) / 2)
+        var index = 0
+        for (i in 2 until length step 2) {
+            val first = this[i].toInt().fromHex()
+            val second = this[i + 1].toInt().fromHex()
+            val octet = first.shl(4).or(second)
+            array[index] = octet.toByte()
+            index++
+        }
+        return array
+    }
 
     override fun getDouble(index: Int) = getString(index)?.toDouble()
 
@@ -226,17 +254,26 @@ class PostgresCursor(
 
 class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatement {
     fun values(scope: AutofreeScope): CValuesRef<CPointerVar<ByteVar>> = createValues(parameters) {
-        value = _values[it]?.cstr?.getPointer(scope)
+        value = when (val value = _values[it]) {
+            null -> null
+            is Data.Bytes -> value.bytes.refTo(0).getPointer(scope)
+            is Data.Text -> value.text.cstr.getPointer(scope)
+        }
     }
 
-    private val _values = arrayOfNulls<String>(parameters)
+    private sealed interface Data {
+        inline class Bytes(val bytes: ByteArray) : Data
+        inline class Text(val text: String) : Data
+    }
+
+    private val _values = arrayOfNulls<Data>(parameters)
     val lengths = IntArray(parameters)
     val formats = IntArray(parameters)
     val types = UIntArray(parameters)
 
     private fun bind(index: Int, value: String?, oid: UInt) {
         lengths[index] = if (value != null) {
-            _values[index] = value
+            _values[index] = Data.Text(value)
             value.length
         } else 0
         formats[index] = PostgresNativeDriver.TEXT_RESULT_FORMAT
@@ -248,7 +285,12 @@ class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatem
     }
 
     override fun bindBytes(index: Int, bytes: ByteArray?) {
-        bind(index, bytes?.decodeToString(), byteaOid)
+        lengths[index] = if (bytes != null && bytes.isNotEmpty()) {
+            _values[index] = Data.Bytes(bytes)
+            bytes.size
+        } else 0
+        formats[index] = PostgresNativeDriver.BINARY_RESULT_FORMAT
+        types[index] = byteaOid
     }
 
     override fun bindDouble(index: Int, double: Double?) {
@@ -278,12 +320,12 @@ fun PostgresNativeDriver(
     database: String,
     user: String,
     password: String,
-    port: Int? = null,
+    port: Int = 5432,
     options: String? = null
 ): PostgresNativeDriver {
     val conn = PQsetdbLogin(
         pghost = host,
-        pgport = port?.toString(),
+        pgport = port.toString(),
         pgtty = null,
         dbName = database,
         login = user,
