@@ -215,7 +215,7 @@ class PostgresCursor(
     private inline fun Int.fromHex(): Int = if (this in 48..57) {
         this - 48
     } else {
-        this - 97
+        this - 87
     }
 
     // because "normal" CPointer<ByteVar>.toByteArray() functions does not support hex (2 Bytes) bytes
@@ -262,8 +262,8 @@ class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatem
     }
 
     private sealed interface Data {
-        inline class Bytes(val bytes: ByteArray) : Data
-        inline class Text(val text: String) : Data
+        value class Bytes(val bytes: ByteArray) : Data
+        value class Text(val text: String) : Data
     }
 
     private val _values = arrayOfNulls<Data>(parameters)
