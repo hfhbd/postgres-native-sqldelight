@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.konan.target.*
 
 plugins {
-    kotlin("multiplatform") version "1.7.0-Beta"
+    kotlin("multiplatform") version "1.7.0-RC"
 }
 
 repositories {
