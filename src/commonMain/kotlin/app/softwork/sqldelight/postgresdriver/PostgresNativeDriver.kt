@@ -15,15 +15,15 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
     }
 
     override fun addListener(listener: Query.Listener, queryKeys: Array<String>) {
-        TODO("Not yet implemented")
+
     }
 
     override fun notifyListeners(queryKeys: Array<String>) {
-        TODO("Not yet implemented")
+
     }
 
     override fun removeListener(listener: Query.Listener, queryKeys: Array<String>) {
-        TODO("Not yet implemented")
+
     }
 
     override fun currentTransaction() = transaction
@@ -40,14 +40,15 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
             }
         } else null
         val result = if (identifier != null) {
-            PQprepare(
-                conn,
-                stmtName = identifier.toString(),
-                query = sql,
-                nParams = parameters,
-                paramTypes = preparedStatement?.types?.refTo(0)
-            ).check(conn).clear()
-
+            if (!preparedStatementExists(identifier)) {
+                PQprepare(
+                    conn,
+                    stmtName = identifier.toString(),
+                    query = sql.replaceQuestionMarks(),
+                    nParams = parameters,
+                    paramTypes = preparedStatement?.types?.refTo(0)
+                ).check(conn).clear()
+            }
             memScoped {
                 PQexecPrepared(
                     conn,
@@ -63,7 +64,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
             memScoped {
                 PQexecParams(
                     conn,
-                    command = sql,
+                    command = sql.replaceQuestionMarks(),
                     nParams = parameters,
                     paramValues = preparedStatement?.values(this),
                     paramFormats = preparedStatement?.formats?.refTo(0),
@@ -76,6 +77,21 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         val rows = PQcmdTuples(result)!!.toKString()
         result.clear()
         return rows.toLongOrNull() ?: 0
+    }
+
+    private fun preparedStatementExists(identifier: Int): Boolean {
+        val result = executeQuery(
+            null,
+            "SELECT name FROM pg_prepared_statements WHERE name = $1",
+            parameters = 1,
+            binders = {
+                bindString(1, identifier.toString())
+            },
+            mapper = {
+                it.next()
+                it.getString(0)
+            })
+        return result != null
     }
 
     override fun <R> executeQuery(
@@ -95,11 +111,15 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
             }
         } else null
         val result = if (identifier != null) {
-            PQprepare(
-                conn,
-                stmtName = identifier.toString(), query = "$cursor $sql", nParams = parameters,
-                paramTypes = preparedStatement?.types?.refTo(0)
-            ).check(conn).clear()
+            if (!preparedStatementExists(identifier)) {
+                PQprepare(
+                    conn,
+                    stmtName = identifier.toString(),
+                    query = "$cursor ${sql.replaceQuestionMarks()}",
+                    nParams = parameters,
+                    paramTypes = preparedStatement?.types?.refTo(0)
+                ).check(conn).clear()
+            }
             conn.exec("BEGIN")
             memScoped {
                 PQexecPrepared(
@@ -117,7 +137,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
             memScoped {
                 PQexecParams(
                     conn,
-                    command = "$cursor $sql",
+                    command = "$cursor ${sql.replaceQuestionMarks()}",
                     nParams = parameters,
                     paramValues = preparedStatement?.values(this),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
@@ -131,9 +151,17 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         return PostgresCursor(result, cursorName, conn).use(mapper)
     }
 
+    private fun String.replaceQuestionMarks(): String {
+        var index = 1
+        return replace(replaceQuestionMarks) {
+            "$${index++}"
+        }
+    }
+
     internal companion object {
         const val TEXT_RESULT_FORMAT = 0
         const val BINARY_RESULT_FORMAT = 1
+        val replaceQuestionMarks = "\\?".toRegex()
     }
 
     override fun close() {
@@ -272,12 +300,12 @@ class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatem
     val types = UIntArray(parameters)
 
     private fun bind(index: Int, value: String?, oid: UInt) {
-        lengths[index] = if (value != null) {
-            _values[index] = Data.Text(value)
+        lengths[index - 1] = if (value != null) {
+            _values[index - 1] = Data.Text(value)
             value.length
         } else 0
-        formats[index] = PostgresNativeDriver.TEXT_RESULT_FORMAT
-        types[index] = oid
+        formats[index - 1] = PostgresNativeDriver.TEXT_RESULT_FORMAT
+        types[index - 1] = oid
     }
 
     override fun bindBoolean(index: Int, boolean: Boolean?) {
@@ -285,12 +313,12 @@ class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatem
     }
 
     override fun bindBytes(index: Int, bytes: ByteArray?) {
-        lengths[index] = if (bytes != null && bytes.isNotEmpty()) {
-            _values[index] = Data.Bytes(bytes)
+        lengths[index - 1] = if (bytes != null && bytes.isNotEmpty()) {
+            _values[index - 1] = Data.Bytes(bytes)
             bytes.size
         } else 0
-        formats[index] = PostgresNativeDriver.BINARY_RESULT_FORMAT
-        types[index] = byteaOid
+        formats[index - 1] = PostgresNativeDriver.BINARY_RESULT_FORMAT
+        types[index - 1] = byteaOid
     }
 
     override fun bindDouble(index: Int, double: Double?) {

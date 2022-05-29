@@ -1,38 +1,30 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.konan.target.*
 
 plugins {
-    kotlin("multiplatform") version "1.7.0"
+    kotlin("multiplatform")
+    id("app.cash.sqldelight") version "2.0.0-SNAPSHOT"
 }
 
 repositories {
     mavenCentral()
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+    maven(url = "https://www.jetbrains.com/intellij-repository/releases")
+    maven(url = "https://cache-redirector.jetbrains.com/intellij-dependencies")
 }
 
 kotlin {
-    fun KotlinNativeTarget.config() {
-        compilations.getByName("main") {
-            cinterops {
-                val libpq by creating {
-                    defFile(project.file("src/nativeInterop/cinterop/libpq.def"))
-                }
-            }
-        }
-    }
-
     when (HostManager.host) {
         KonanTarget.MACOS_ARM64 -> {
-            macosArm64 { config() }
+            macosArm64()
         }
         KonanTarget.MACOS_X64 -> {
-            macosX64 { config() }
+            macosX64()
         }
         KonanTarget.LINUX_X64 -> {
-            linuxX64 { config() }
+            linuxX64()
         }
         KonanTarget.MINGW_X64 -> {
-            mingwX64 { config() }
+            mingwX64()
         }
         else -> error("Not yet supported")
     }
@@ -40,7 +32,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api("app.cash.sqldelight:runtime:2.0.0-SNAPSHOT")
+                implementation(project(":"))
             }
         }
         commonTest {
@@ -48,5 +40,13 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
+    }
+}
+
+sqldelight {
+    database("NativePostgres") {
+        dialect(project(":native-dialect"))
+        packageName = "app.softwork.sqldelight.postgresdriver"
+        deriveSchemaFromMigrations = true
     }
 }
