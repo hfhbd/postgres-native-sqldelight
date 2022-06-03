@@ -8,11 +8,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ] #, macos-latest ] #, windows-latest ]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     # Service containers to run with `container-job`
     services:
       # Label used to access the service container
