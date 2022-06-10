@@ -20,13 +20,13 @@ class PostgresNativeDriverTest {
         }
 
         val result = driver.execute(null, "INSERT INTO baz VALUES ($1, $2, $3), ($4, $5, $6)", parameters = 6) {
-            bindLong(1, 5)
-            bindString(2, "bar 0")
-            bindBytes(3, byteArrayOf(1.toByte(), 2.toByte()))
+            bindLong(0, 5)
+            bindString(1, "bar 0")
+            bindBytes(2, byteArrayOf(1.toByte(), 2.toByte()))
 
-            bindLong(4, 6)
-            bindString(5, "bar 1")
-            bindBytes(6, byteArrayOf(16.toByte(), 12.toByte()))
+            bindLong(3, 6)
+            bindString(4, "bar 1")
+            bindBytes(5, byteArrayOf(16.toByte(), 12.toByte()))
         }.value
         assertEquals(2, result)
         val notPrepared = driver.executeQuery(null, "SELECT * from baz limit 1;", parameters = 0, mapper = {
