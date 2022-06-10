@@ -37,7 +37,7 @@ jobs:
           distribution: 'adopt'
           java-version: 11
       - run: ./gradlew assemble
-      - run: ./gradlew dependencies
+      - run: ./gradlew :testing:dependencies
       - run: ./gradlew build
       - uses: actions/upload-artifact@v3
         with:
