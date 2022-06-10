@@ -3,7 +3,10 @@ package app.softwork.sqldelight.postgresdriver
 import app.cash.sqldelight.*
 import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
+import kotlinx.datetime.*
+import kotlinx.uuid.*
 import libpq.*
+import kotlin.time.*
 
 class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
     private var transaction: Transacter.Transaction? = null
@@ -12,6 +15,12 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         require(PQstatus(conn) == ConnStatusType.CONNECTION_OK) {
             conn.error()
         }
+        setDateOutputs()
+    }
+
+    private fun setDateOutputs() {
+        execute(null, "SET intervalstyle = 'iso_8601';", 0)
+        execute(null, "SET datestyle = 'ISO';", 0)
     }
 
     override fun addListener(listener: Query.Listener, queryKeys: Array<String>) {
@@ -33,7 +42,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         sql: String,
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
-    ): Long {
+    ): QueryResult.Value<Long> {
         val preparedStatement = if (parameters != 0) PostgresPreparedStatement(parameters).apply {
             if (binders != null) {
                 binders()
@@ -76,22 +85,19 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         }.check(conn)
         val rows = PQcmdTuples(result)!!.toKString()
         result.clear()
-        return rows.toLongOrNull() ?: 0
+        val resultRows = rows.toLongOrNull() ?: 0
+        return QueryResult.Value(value = resultRows)
     }
 
     private fun preparedStatementExists(identifier: Int): Boolean {
-        val result = executeQuery(
-            null,
-            "SELECT name FROM pg_prepared_statements WHERE name = $1",
-            parameters = 1,
-            binders = {
+        val result =
+            executeQuery(null, "SELECT name FROM pg_prepared_statements WHERE name = $1", parameters = 1, binders = {
                 bindString(1, identifier.toString())
-            },
-            mapper = {
+            }, mapper = {
                 it.next()
                 it.getString(0)
             })
-        return result != null
+        return result.value != null
     }
 
     override fun <R> executeQuery(
@@ -100,7 +106,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         mapper: (SqlCursor) -> R,
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
-    ): R {
+    ): QueryResult.Value<R> {
         val cursorName = if (identifier == null) "myCursor" else "cursor$identifier"
         val cursor = "DECLARE $cursorName CURSOR FOR"
         val preparedStatement = if (parameters != 0) {
@@ -148,7 +154,8 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
             }
         }.check(conn)
 
-        return PostgresCursor(result, cursorName, conn).use(mapper)
+        val value = PostgresCursor(result, cursorName, conn).use(mapper)
+        return QueryResult.Value(value = value)
     }
 
     private fun String.replaceQuestionMarks(): String {
@@ -274,6 +281,17 @@ class PostgresCursor(
         }
     }
 
+    fun getDate(index: Int): LocalDate? = getString(index)?.toLocalDate()
+
+    // fun getTime(index: Int): LocalTime? = getInt(index)?.toLocalTime()
+    fun getLocalTimestamp(index: Int): LocalDateTime? = getString(index)?.replace(" ", "T")?.toLocalDateTime()
+    fun getTimestamp(index: Int): Instant? = getString(index)?.let {
+        Instant.parse(it.replace(" ", "T"))
+    }
+
+    fun getInterval(index: Int): Duration? = getString(index)?.let { Duration.parseIsoString(it) }
+    fun getUUID(index: Int): UUID? = getString(index)?.toUUID()
+
     override fun next(): Boolean {
         result = PQexec(conn, "FETCH NEXT IN $name").check(conn)
         return PQcmdTuples(result)!!.toKString().toInt() == 1
@@ -333,23 +351,52 @@ class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatem
         bind(index, string, textOid)
     }
 
+    fun bindDate(index: Int, value: LocalDate?) {
+        bind(index, value?.toString(), dateOid)
+    }
+
+    /*
+    fun bindTime(index: Int, value: LocalTime?) {
+        bind(index, value?.toString(), timeOid)
+    }
+    */
+
+    fun bindLocalTimestamp(index: Int, value: LocalDateTime?) {
+        bind(index, value?.toString(), timestampOid)
+    }
+
+    fun bindTimestamp(index: Int, value: Instant?) {
+        bind(index, value?.toString(), timestampTzOid)
+    }
+
+    fun bindInterval(index: Int, value: Duration?) {
+        bind(index, value?.toIsoString(), intervalOid)
+    }
+
+    fun bindUUID(index: Int, value: UUID?) {
+        bind(index, value?.toString(), uuidOid)
+    }
+
     companion object {
         // Hardcoded, because not provided in libpq-fe.h for unknown reasons...
+        // select * from pg_type;
         private const val boolOid = 16u
         private const val byteaOid = 17u
         private const val longOid = 20u
         private const val textOid = 25u
         private const val doubleOid = 701u
+
+        private const val dateOid = 1082u
+        private const val timeOid = 1083u
+        private const val intervalOid = 1186u
+        private const val timestampOid = 1114u
+        private const val timestampTzOid = 1184u
+        private const val uuidOid = 2950u
     }
 }
 
 fun PostgresNativeDriver(
-    host: String,
-    database: String,
-    user: String,
-    password: String,
-    port: Int = 5432,
-    options: String? = null
+    host: String, database: String, user: String, password: String, port: Int = 5432, options: String? = null
 ): PostgresNativeDriver {
     val conn = PQsetdbLogin(
         pghost = host,

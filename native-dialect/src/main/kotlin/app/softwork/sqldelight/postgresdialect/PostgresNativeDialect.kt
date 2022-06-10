@@ -24,7 +24,6 @@ class PostgresNativeDialect : PostgreSqlDialect() {
                     smallIntDataType != null -> PostgreSqlType.SMALL_INT
                     intDataType != null -> PostgreSqlType.INTEGER
                     bigIntDataType != null -> PostgreSqlType.BIG_INT
-                    numericDataType != null -> PostgreSqlType.NUMERIC
                     approximateNumericDataType != null -> PrimitiveType.REAL
                     stringDataType != null -> PrimitiveType.TEXT
                     uuidDataType != null -> PostgreSqlType.UUID
@@ -34,7 +33,7 @@ class PostgresNativeDialect : PostgreSqlDialect() {
                     dateDataType != null -> {
                         when (dateDataType!!.firstChild.text) {
                             "DATE" -> PostgreSqlType.DATE
-                            "TIME" -> PostgreSqlType.TIME
+                            //"TIME" -> PostgreSqlType.TIME
                             "TIMESTAMP" -> if (dateDataType!!.node.getChildren(null)
                                     .any { it.text == "WITH" }
                             ) PostgreSqlType.TIMESTAMP_TIMEZONE else PostgreSqlType.TIMESTAMP
@@ -54,7 +53,7 @@ class PostgresNativeDialect : PostgreSqlDialect() {
                     override val javaType = Array::class.asTypeName().parameterizedBy(type.javaType)
 
                     override fun prepareStatementBinder(columnIndex: String, value: CodeBlock) =
-                        CodeBlock.of("bindObject($columnIndex, %L)\n", value)
+                        CodeBlock.of("bindArray($columnIndex, %L)\n", value)
 
                     override fun cursorGetter(columnIndex: Int, cursorName: String) =
                         CodeBlock.of("$cursorName.getArray($columnIndex)")
@@ -77,22 +76,24 @@ internal enum class PostgreSqlType(override val javaType: TypeName): DialectType
         override fun encode(value: CodeBlock) = CodeBlock.of("%L.toLong()", value)
     },
     BIG_INT(LONG),
-    DATE(ClassName("java.time", "LocalDate")),
-    TIME(ClassName("java.time", "LocalTime")),
-    TIMESTAMP(ClassName("java.time", "LocalDateTime")),
-    TIMESTAMP_TIMEZONE(ClassName("java.time", "OffsetDateTime")),
-    INTERVAL(ClassName("org.postgresql.util", "PGInterval")),
-    UUID(ClassName("java.util", "UUID")),
-    NUMERIC(ClassName("java.math", "BigDecimal")),
-    ;
+    DATE(ClassName("kotlinx.datetime", "LocalDate")),
+    //TIME(kotlinx.datetime.LocalTime::class.asTypeName()),
+    TIMESTAMP(ClassName("kotlinx.datetime", "LocalDateTime")),
+    TIMESTAMP_TIMEZONE(ClassName("kotlinx.datetime", "Instant")),
+    INTERVAL(ClassName("kotlin.time", "Duration")),
+    UUID(ClassName("kotlinx.uuid", "UUID"));
 
     override fun prepareStatementBinder(columnIndex: String, value: CodeBlock): CodeBlock {
         return CodeBlock.builder()
             .add(
                 when (this) {
                     SMALL_INT, INTEGER, BIG_INT -> "bindLong"
-                    DATE, TIME, TIMESTAMP, TIMESTAMP_TIMEZONE, INTERVAL, UUID -> "bindObject"
-                    NUMERIC -> "bindBigDecimal"
+                    DATE -> "bindDate"
+                    //TIME -> "bindTime"
+                    TIMESTAMP -> "bindLocalTimestamp"
+                    TIMESTAMP_TIMEZONE -> "bindTimestamp"
+                    INTERVAL -> "bindInterval"
+                    UUID -> "bindUUID"
                 }
             )
             .add("($columnIndex, %L)\n", value)
@@ -103,8 +104,12 @@ internal enum class PostgreSqlType(override val javaType: TypeName): DialectType
         return CodeBlock.of(
             when (this) {
                 SMALL_INT, INTEGER, BIG_INT -> "$cursorName.getLong($columnIndex)"
-                DATE, TIME, TIMESTAMP, TIMESTAMP_TIMEZONE, INTERVAL, UUID -> "$cursorName.getObject($columnIndex)"
-                NUMERIC -> "$cursorName.getBigDecimal($columnIndex)"
+                DATE -> "$cursorName.getDate($columnIndex)"
+                //TIME -> "$cursorName.getTime($columnIndex)"
+                TIMESTAMP -> "$cursorName.getLocalTimestamp($columnIndex)"
+                TIMESTAMP_TIMEZONE -> "$cursorName.getTimestamp($columnIndex)"
+                INTERVAL -> "$cursorName.getInterval($columnIndex)"
+                UUID -> "$cursorName.getUUID($columnIndex)"
             }
         )
     }

@@ -41,6 +41,8 @@ kotlin {
         commonMain {
             dependencies {
                 api("app.cash.sqldelight:runtime:2.0.0-SNAPSHOT")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.3.3")
+                api("app.softwork:kotlinx-uuid-core:0.0.15")
             }
         }
         commonTest {
