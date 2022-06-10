@@ -49,4 +49,5 @@ sqldelight {
         packageName = "app.softwork.sqldelight.postgresdriver"
         deriveSchemaFromMigrations = true
     }
+    linkSqlite = false
 }
