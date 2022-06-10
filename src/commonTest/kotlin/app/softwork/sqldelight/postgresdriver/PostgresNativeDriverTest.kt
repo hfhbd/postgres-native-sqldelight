@@ -68,20 +68,6 @@ class PostgresNativeDriverTest {
         )
     }
 
-    @Test
-    fun postgresTypes() {
-        val driver = PostgresNativeDriver(
-            host = "localhost",
-            port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password"
-        )
-        assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS ptest;", parameters = 0).value)
-
-
-    }
-
     private data class Simple(val index: Int, val name: String?, val byteArray: ByteArray?) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
