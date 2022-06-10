@@ -318,12 +318,12 @@ class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatem
     val types = UIntArray(parameters)
 
     private fun bind(index: Int, value: String?, oid: UInt) {
-        lengths[index - 1] = if (value != null) {
-            _values[index - 1] = Data.Text(value)
+        lengths[index] = if (value != null) {
+            _values[index] = Data.Text(value)
             value.length
         } else 0
-        formats[index - 1] = PostgresNativeDriver.TEXT_RESULT_FORMAT
-        types[index - 1] = oid
+        formats[index] = PostgresNativeDriver.TEXT_RESULT_FORMAT
+        types[index] = oid
     }
 
     override fun bindBoolean(index: Int, boolean: Boolean?) {
@@ -331,12 +331,12 @@ class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatem
     }
 
     override fun bindBytes(index: Int, bytes: ByteArray?) {
-        lengths[index - 1] = if (bytes != null && bytes.isNotEmpty()) {
-            _values[index - 1] = Data.Bytes(bytes)
+        lengths[index] = if (bytes != null && bytes.isNotEmpty()) {
+            _values[index] = Data.Bytes(bytes)
             bytes.size
         } else 0
-        formats[index - 1] = PostgresNativeDriver.BINARY_RESULT_FORMAT
-        types[index - 1] = byteaOid
+        formats[index] = PostgresNativeDriver.BINARY_RESULT_FORMAT
+        types[index] = byteaOid
     }
 
     override fun bindDouble(index: Int, double: Double?) {
