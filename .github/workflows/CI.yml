@@ -39,6 +39,8 @@ jobs:
       - run: ./gradlew assemble
       - run: ./gradlew build
       - uses: actions/upload-artifact@v3
-        with:
-          path: build/reports/tests
+        with: 
+          path: | 
+            build/reports/tests
+            testing/build/reports/tests
         if: failure()
