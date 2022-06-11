@@ -3,3 +3,6 @@ INSERT INTO foo VALUES ?;
 
 get:
 SELECT * FROM foo;
+
+copy:
+COPY foo FROM STDIN (FORMAT CSV);
