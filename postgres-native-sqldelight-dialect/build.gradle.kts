@@ -1,5 +1,8 @@
+import groovy.util.*
+
 plugins {
     kotlin("jvm")
+    `maven-publish`
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -57,4 +60,30 @@ configurations {
 artifacts {
     runtimeOnly(tasks.shadowJar)
     archives(tasks.shadowJar)
+}
+
+// Disable Gradle module.json as it lists wrong dependencies
+tasks.withType<GenerateModuleMetadata> {
+    enabled = false
+}
+
+// Remove dependencies from POM: uber jar has no dependencies
+publishing {
+    publications {
+        withType(MavenPublication::class.java) {
+            if (name == "pluginMaven") {
+                pom.withXml {
+                    val pomNode = asNode()
+
+                    val dependencyNodes: NodeList = pomNode.get("dependencies") as NodeList
+                    dependencyNodes.forEach {
+                        (it as Node).parent().remove(it)
+                    }
+                }
+            }
+        }
+        create("shadow", MavenPublication::class.java) {
+            project.shadow.component(this)
+        }
+    }
 }
