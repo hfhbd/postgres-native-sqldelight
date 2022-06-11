@@ -83,10 +83,14 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
                 )
             }
         }.check(conn)
-        val rows = PQcmdTuples(result)!!.toKString()
-        result.clear()
-        val resultRows = rows.toLongOrNull() ?: 0
-        return QueryResult.Value(value = resultRows)
+
+        return QueryResult.Value(value = result.rows)
+    }
+
+    private val CPointer<PGresult>.rows: Long get() {
+        val rows = PQcmdTuples(this)!!.toKString()
+        clear()
+        return rows.toLongOrNull() ?: 0
     }
 
     private fun preparedStatementExists(identifier: Int): Boolean {
@@ -194,6 +198,19 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
             transaction = enclosingTransaction
         }
     }
+
+    fun copy(stdin: String): Long {
+        val status = PQputCopyData(conn, stdin, stdin.encodeToByteArray().size)
+        check(status == 1) {
+            conn.error()
+        }
+        val end = PQputCopyEnd(conn, null)
+        check(end == 1) {
+            conn.error()
+        }
+        val result = PQgetResult(conn).check(conn)
+        return result.rows
+    }
 }
 
 private fun CPointer<PGconn>?.error(): String {
@@ -214,7 +231,7 @@ private fun CPointer<PGconn>.exec(sql: String) {
 
 private fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresult> {
     val status = PQresultStatus(this)
-    check(status == PGRES_TUPLES_OK || status == PGRES_COMMAND_OK) {
+    check(status == PGRES_TUPLES_OK || status == PGRES_COMMAND_OK || status == PGRES_COPY_IN) {
         conn.error()
     }
     return this!!
