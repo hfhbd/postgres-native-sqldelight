@@ -7,7 +7,10 @@ pluginManagement {
     }
 }
 
-rootProject.name = "SqlDelightNativePostgres"
+rootProject.name = "postgres-native-sqldelight"
 
-include(":native-dialect")
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+include(":postgres-native-sqldelight-driver")
+include(":postgres-native-sqldelight-dialect")
 include(":testing")
