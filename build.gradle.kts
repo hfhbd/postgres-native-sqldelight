@@ -1,55 +1,78 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.konan.target.*
+import java.util.*
 
 plugins {
-    kotlin("multiplatform") version "1.7.0"
+    kotlin("multiplatform") version "1.7.0" apply false
+    `maven-publish`
+    signing
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
 repositories {
     mavenCentral()
-    maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
 }
 
-kotlin {
-    fun KotlinNativeTarget.config() {
-        compilations.getByName("main") {
-            cinterops {
-                val libpq by creating {
-                    defFile(project.file("src/nativeInterop/cinterop/libpq.def"))
+allprojects {
+    if (this.name == "testing") {
+        return@allprojects
+    }
+    plugins.apply("org.gradle.maven-publish")
+    plugins.apply("org.gradle.signing")
+
+    val emptyJar by tasks.creating(Jar::class) { }
+
+    group = "app.softwork"
+
+    publishing {
+        publications.all {
+            this as MavenPublication
+            artifact(emptyJar) {
+                classifier = "javadoc"
+            }
+            pom {
+                name.set("app.softwork Postgres Native Driver and SqlDelight Dialect")
+                description.set("A Postgres native driver including support for SqlDelight")
+                url.set("https://github.com/hfhbd/kotlinx-serialization-csv")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("hfhbd")
+                        name.set("Philip Wedemann")
+                        email.set("mybztg+mavencentral@icloud.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git://github.com/hfhbd/SqlDelightNativePostgres.git")
+                    developerConnection.set("scm:git://github.com/hfhbd/SqlDelightNativePostgres.git")
+                    url.set("https://github.com/hfhbd/SqlDelightNativePostgres")
                 }
             }
         }
     }
 
-    when (HostManager.host) {
-        KonanTarget.MACOS_ARM64 -> {
-            macosArm64 { config() }
+    (System.getProperty("signing.privateKey") ?: System.getenv("SIGNING_PRIVATE_KEY"))?.let {
+        String(Base64.getDecoder().decode(it)).trim()
+    }?.let { key ->
+        println("found key, config signing")
+        signing {
+            val signingPassword = System.getProperty("signing.password") ?: System.getenv("SIGNING_PASSWORD")
+            useInMemoryPgpKeys(key, signingPassword)
+            sign(publishing.publications)
         }
-        KonanTarget.MACOS_X64 -> {
-            macosX64 { config() }
-        }
-        KonanTarget.LINUX_X64 -> {
-            linuxX64 { config() }
-        }
-        KonanTarget.MINGW_X64 -> {
-            mingwX64 { config() }
-        }
-        else -> error("Not yet supported")
     }
+}
 
-    sourceSets {
-        commonMain {
-            dependencies {
-                api("app.cash.sqldelight:runtime:2.0.0-SNAPSHOT")
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.3.3")
-                api("app.softwork:kotlinx-uuid-core:0.0.15")
-            }
-        }
-        commonTest {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.2")
-            }
+nexusPublishing {
+    repositories {
+        sonatype {
+            username.set(System.getProperty("sonartype.apiKey") ?: System.getenv("SONARTYPE_APIKEY"))
+            password.set(System.getProperty("sonartype.apiToken") ?: System.getenv("SONARTYPE_APITOKEN"))
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
         }
     }
 }

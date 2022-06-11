@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.konan.target.*
-
 plugins {
     kotlin("multiplatform")
     id("app.cash.sqldelight") version "2.0.0-SNAPSHOT"
@@ -13,26 +11,17 @@ repositories {
 }
 
 kotlin {
-    when (HostManager.host) {
-        KonanTarget.MACOS_ARM64 -> {
-            macosArm64()
-        }
-        KonanTarget.MACOS_X64 -> {
-            macosX64()
-        }
-        KonanTarget.LINUX_X64 -> {
-            linuxX64()
-        }
-        KonanTarget.MINGW_X64 -> {
-            mingwX64()
-        }
-        else -> error("Not yet supported")
-    }
+
+    macosArm64()
+    macosX64()
+
+    linuxX64()
+    // mingwX64()
 
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":"))
+                implementation(projects.postgresNativeSqldelightDriver)
             }
         }
         commonTest {
@@ -45,7 +34,7 @@ kotlin {
 
 sqldelight {
     database("NativePostgres") {
-        dialect(project(":native-dialect"))
+        dialect(projects.postgresNativeSqldelightDialect)
         packageName = "app.softwork.sqldelight.postgresdriver"
         deriveSchemaFromMigrations = true
     }

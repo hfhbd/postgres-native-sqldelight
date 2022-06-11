@@ -7,5 +7,5 @@ package = libpq
 compilerOpts.osx = -I/opt/homebrew/opt/libpq/include
 linkerOpts.osx = -L/opt/homebrew/opt/libpq/lib -lpq
 
-compilerOpts.linux = -I/home/linuxbrew/.linuxbrew/opt/libpq/include
-linkerOpts.linux = -L/home/linuxbrew/.linuxbrew/opt/libpq/lib -lpq
+compilerOpts.linux = -I/home/linuxbrew/.linuxbrew/opt/libpq/include -I/opt/homebrew/opt/libpq/include
+linkerOpts.linux = -L/home/linuxbrew/.linuxbrew/opt/libpq/lib -L/opt/homebrew/opt/libpq/lib -lpq
