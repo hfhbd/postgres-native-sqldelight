@@ -3,6 +3,7 @@ name: CD
 on:
   release:
     types: [ created ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,7 +18,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 11
-      - run: brew install libpq
+      - run: brew reinstall libpq
       - name: Build with Gradle
         run: ./gradlew assemble
       - name: Publish
