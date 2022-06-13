@@ -1,17 +1,13 @@
 name: CD
 
 on:
-  release:
-    types: [ created ]
-  workflow_dispatch:
+  push:
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      - name: Set environment for version
-        run: long="${{ github.ref }}"; version=${long#"refs/tags/v"}; echo "version=${version}" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - uses: gradle/wrapper-validation-action@v1
       - uses: actions/setup-java@v3
@@ -21,10 +17,3 @@ jobs:
       - run: brew reinstall libpq
       - name: Build with Gradle
         run: ./gradlew assemble
-      - name: Publish
-        run: ./gradlew -Pversion=$version -Dorg.gradle.parallel=false publish closeAndReleaseStagingRepository
-        env:
-          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          SONARTYPE_APIKEY: ${{ secrets.SONARTYPE_APIKEY }}
-          SONARTYPE_APITOKEN: ${{ secrets.SONARTYPE_APITOKEN }}
