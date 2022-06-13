@@ -5,7 +5,6 @@ import app.cash.sqldelight.dialects.postgresql.*
 import app.cash.sqldelight.dialects.postgresql.grammar.psi.*
 import com.alecstrong.sql.psi.core.psi.*
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
 class PostgresNativeDialect : PostgreSqlDialect() {
     override val runtimeTypes = RuntimeTypes(
@@ -48,17 +47,6 @@ class PostgresNativeDialect : PostgreSqlDialect() {
                     else -> throw IllegalArgumentException("Unknown kotlin type for sql type ${this.text}")
                 }
             )
-            if (node.getChildren(null).map { it.text }.takeLast(2) == listOf("[", "]")) {
-                return IntermediateType(object : DialectType {
-                    override val javaType = Array::class.asTypeName().parameterizedBy(type.javaType)
-
-                    override fun prepareStatementBinder(columnIndex: String, value: CodeBlock) =
-                        CodeBlock.of("bindArray($columnIndex, %L)\n", value)
-
-                    override fun cursorGetter(columnIndex: Int, cursorName: String) =
-                        CodeBlock.of("$cursorName.getArray($columnIndex)")
-                })
-            }
             return type
         }
     }
