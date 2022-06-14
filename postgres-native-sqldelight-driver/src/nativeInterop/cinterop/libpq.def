@@ -4,8 +4,5 @@ package = libpq
 #staticLibraries = libpq.a
 #libraryPaths = /opt/homebrew/opt/libpq/lib
 
-compilerOpts.osx = -I/opt/homebrew/opt/libpq/include -I/usr/local/opt/libpq/include
-linkerOpts.osx = -L/opt/homebrew/opt/libpq/lib -L/usr/local/opt/libpq/lib -lpq
-
-compilerOpts.linux = -I/home/linuxbrew/.linuxbrew/opt/libpq/include -I/opt/homebrew/opt/libpq/include
-linkerOpts.linux = -L/home/linuxbrew/.linuxbrew/opt/libpq/lib -L/opt/homebrew/opt/libpq/lib -lpq
+compilerOpts = -I/home/linuxbrew/.linuxbrew/opt/libpq/include -I/opt/homebrew/opt/libpq/include -I/usr/local/opt/libpq/include
+linkerOpts = -L/home/linuxbrew/.linuxbrew/opt/libpq/lib -L/opt/homebrew/opt/libpq/lib -L/usr/local/opt/libpq/lib -lpq
