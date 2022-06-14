@@ -6,7 +6,7 @@ import app.cash.sqldelight.dialects.postgresql.grammar.psi.*
 import com.alecstrong.sql.psi.core.psi.*
 import com.squareup.kotlinpoet.*
 
-class PostgresNativeDialect : PostgreSqlDialect() {
+class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
     override val runtimeTypes = RuntimeTypes(
         driverType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresNativeDriver"),
         cursorType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresCursor"),
