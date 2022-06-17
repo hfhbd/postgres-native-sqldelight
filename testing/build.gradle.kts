@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("app.cash.sqldelight") version "2.0.0-SNAPSHOT"
+    id("app.cash.sqldelight") version "2.0.0-alpha03"
 }
 
 repositories {
