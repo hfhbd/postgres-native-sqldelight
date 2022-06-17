@@ -14,9 +14,9 @@ repositories {
 }
 
 dependencies {
-    api("app.cash.sqldelight:postgresql-dialect:2.0.0-SNAPSHOT")
+    api("app.cash.sqldelight:postgresql-dialect:2.0.0-alpha03")
 
-    compileOnly("app.cash.sqldelight:dialect-api:2.0.0-SNAPSHOT")
+    compileOnly("app.cash.sqldelight:dialect-api:2.0.0-alpha03")
 
     val idea = "221.5787.30"
     compileOnly("com.jetbrains.intellij.platform:core-impl:$idea")

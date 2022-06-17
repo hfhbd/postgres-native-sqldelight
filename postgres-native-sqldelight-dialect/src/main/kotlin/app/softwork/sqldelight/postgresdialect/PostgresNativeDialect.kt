@@ -15,7 +15,7 @@ class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
 
     override fun typeResolver(parentResolver: TypeResolver): TypeResolver = PostgresNativeTypeResolver(parentResolver)
 
-    class PostgresNativeTypeResolver(parentResolver: TypeResolver) : PostgreSqlTypeResolver(parentResolver) {
+    class PostgresNativeTypeResolver(parentResolver: TypeResolver) : TypeResolver by PostgreSqlTypeResolver(parentResolver) {
         override fun definitionType(typeName: SqlTypeName): IntermediateType = with(typeName) {
             check(this is PostgreSqlTypeName)
             val type = IntermediateType(

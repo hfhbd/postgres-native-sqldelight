@@ -179,15 +179,15 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
         PQfinish(conn)
     }
 
-    override fun newTransaction(): Transacter.Transaction {
+    override fun newTransaction(): QueryResult.Value<Transacter.Transaction> {
         conn.exec("BEGIN")
-        return Transaction(transaction)
+        return QueryResult.Value(Transaction(transaction))
     }
 
     private inner class Transaction(
         override val enclosingTransaction: Transacter.Transaction?
     ) : Transacter.Transaction() {
-        override fun endTransaction(successful: Boolean) {
+        override fun endTransaction(successful: Boolean): QueryResult.Unit {
             if (enclosingTransaction == null) {
                 if (successful) {
                     conn.exec("END")
@@ -196,6 +196,7 @@ class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
                 }
             }
             transaction = enclosingTransaction
+            return QueryResult.Unit
         }
     }
 
