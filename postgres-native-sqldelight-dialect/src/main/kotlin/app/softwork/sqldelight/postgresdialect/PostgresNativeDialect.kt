@@ -32,7 +32,7 @@ class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
                     dateDataType != null -> {
                         when (dateDataType!!.firstChild.text) {
                             "DATE" -> PostgreSqlType.DATE
-                            //"TIME" -> PostgreSqlType.TIME
+                            "TIME" -> PostgreSqlType.TIME
                             "TIMESTAMP" -> if (dateDataType!!.node.getChildren(null)
                                     .any { it.text == "WITH" }
                             ) PostgreSqlType.TIMESTAMP_TIMEZONE else PostgreSqlType.TIMESTAMP
@@ -65,7 +65,7 @@ internal enum class PostgreSqlType(override val javaType: TypeName): DialectType
     },
     BIG_INT(LONG),
     DATE(ClassName("kotlinx.datetime", "LocalDate")),
-    //TIME(kotlinx.datetime.LocalTime::class.asTypeName()),
+    TIME(ClassName("kotlinx.datetime", "LocalTime")),
     TIMESTAMP(ClassName("kotlinx.datetime", "LocalDateTime")),
     TIMESTAMP_TIMEZONE(ClassName("kotlinx.datetime", "Instant")),
     INTERVAL(ClassName("kotlin.time", "Duration")),
@@ -77,7 +77,7 @@ internal enum class PostgreSqlType(override val javaType: TypeName): DialectType
                 when (this) {
                     SMALL_INT, INTEGER, BIG_INT -> "bindLong"
                     DATE -> "bindDate"
-                    //TIME -> "bindTime"
+                    TIME -> "bindTime"
                     TIMESTAMP -> "bindLocalTimestamp"
                     TIMESTAMP_TIMEZONE -> "bindTimestamp"
                     INTERVAL -> "bindInterval"
@@ -93,7 +93,7 @@ internal enum class PostgreSqlType(override val javaType: TypeName): DialectType
             when (this) {
                 SMALL_INT, INTEGER, BIG_INT -> "$cursorName.getLong($columnIndex)"
                 DATE -> "$cursorName.getDate($columnIndex)"
-                //TIME -> "$cursorName.getTime($columnIndex)"
+                TIME -> "$cursorName.getTime($columnIndex)"
                 TIMESTAMP -> "$cursorName.getLocalTimestamp($columnIndex)"
                 TIMESTAMP_TIMEZONE -> "$cursorName.getTimestamp($columnIndex)"
                 INTERVAL -> "$cursorName.getInterval($columnIndex)"
