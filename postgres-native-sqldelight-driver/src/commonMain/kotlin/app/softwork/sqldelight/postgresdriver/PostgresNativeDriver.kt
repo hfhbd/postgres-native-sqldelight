@@ -300,8 +300,7 @@ class PostgresCursor(
     }
 
     fun getDate(index: Int): LocalDate? = getString(index)?.toLocalDate()
-
-    // fun getTime(index: Int): LocalTime? = getInt(index)?.toLocalTime()
+    fun getTime(index: Int): LocalTime? = getString(index)?.toLocalTime()
     fun getLocalTimestamp(index: Int): LocalDateTime? = getString(index)?.replace(" ", "T")?.toLocalDateTime()
     fun getTimestamp(index: Int): Instant? = getString(index)?.let {
         Instant.parse(it.replace(" ", "T"))
@@ -373,11 +372,10 @@ class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatem
         bind(index, value?.toString(), dateOid)
     }
 
-    /*
+
     fun bindTime(index: Int, value: LocalTime?) {
         bind(index, value?.toString(), timeOid)
     }
-    */
 
     fun bindLocalTimestamp(index: Int, value: LocalDateTime?) {
         bind(index, value?.toString(), timestampOid)
