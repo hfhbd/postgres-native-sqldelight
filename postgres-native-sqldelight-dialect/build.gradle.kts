@@ -31,6 +31,12 @@ dependencies {
     testImplementation(kotlin("test-junit"))
 }
 
+kotlin {
+    target.compilations.all {
+        kotlinOptions.allWarningsAsErrors = true
+    }
+}
+
 configurations.all {
     exclude(group = "com.jetbrains.rd")
     exclude(group = "com.github.jetbrains", module = "jetCheck")
