@@ -6,53 +6,53 @@ import app.cash.sqldelight.dialects.postgresql.grammar.psi.*
 import com.alecstrong.sql.psi.core.psi.*
 import com.squareup.kotlinpoet.*
 
-class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
-    override val runtimeTypes = RuntimeTypes(
+public class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
+    override val runtimeTypes: RuntimeTypes = RuntimeTypes(
         driverType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresNativeDriver"),
         cursorType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresCursor"),
         preparedStatementType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresPreparedStatement")
     )
 
     override fun typeResolver(parentResolver: TypeResolver): TypeResolver = PostgresNativeTypeResolver(parentResolver)
+}
 
-    class PostgresNativeTypeResolver(parentResolver: TypeResolver) : TypeResolver by PostgreSqlTypeResolver(parentResolver) {
-        override fun definitionType(typeName: SqlTypeName): IntermediateType = with(typeName) {
-            check(this is PostgreSqlTypeName)
-            val type = IntermediateType(
-                when {
-                    smallIntDataType != null -> PostgreSqlType.SMALL_INT
-                    intDataType != null -> PostgreSqlType.INTEGER
-                    bigIntDataType != null -> PostgreSqlType.BIG_INT
-                    approximateNumericDataType != null -> PrimitiveType.REAL
-                    stringDataType != null -> PrimitiveType.TEXT
-                    uuidDataType != null -> PostgreSqlType.UUID
-                    smallSerialDataType != null -> PostgreSqlType.SMALL_INT
-                    serialDataType != null -> PostgreSqlType.INTEGER
-                    bigSerialDataType != null -> PostgreSqlType.BIG_INT
-                    dateDataType != null -> {
-                        when (dateDataType!!.firstChild.text) {
-                            "DATE" -> PostgreSqlType.DATE
-                            "TIME" -> PostgreSqlType.TIME
-                            "TIMESTAMP" -> if (dateDataType!!.node.getChildren(null)
-                                    .any { it.text == "WITH" }
-                            ) PostgreSqlType.TIMESTAMP_TIMEZONE else PostgreSqlType.TIMESTAMP
-                            "TIMESTAMPTZ" -> PostgreSqlType.TIMESTAMP_TIMEZONE
-                            "INTERVAL" -> PostgreSqlType.INTERVAL
-                            else -> throw IllegalArgumentException("Unknown date type ${dateDataType!!.text}")
-                        }
+private class PostgresNativeTypeResolver(parentResolver: TypeResolver) : TypeResolver by PostgreSqlTypeResolver(parentResolver) {
+    override fun definitionType(typeName: SqlTypeName): IntermediateType = with(typeName) {
+        check(this is PostgreSqlTypeName)
+        val type = IntermediateType(
+            when {
+                smallIntDataType != null -> PostgreSqlType.SMALL_INT
+                intDataType != null -> PostgreSqlType.INTEGER
+                bigIntDataType != null -> PostgreSqlType.BIG_INT
+                approximateNumericDataType != null -> PrimitiveType.REAL
+                stringDataType != null -> PrimitiveType.TEXT
+                uuidDataType != null -> PostgreSqlType.UUID
+                smallSerialDataType != null -> PostgreSqlType.SMALL_INT
+                serialDataType != null -> PostgreSqlType.INTEGER
+                bigSerialDataType != null -> PostgreSqlType.BIG_INT
+                dateDataType != null -> {
+                    when (dateDataType!!.firstChild.text) {
+                        "DATE" -> PostgreSqlType.DATE
+                        "TIME" -> PostgreSqlType.TIME
+                        "TIMESTAMP" -> if (dateDataType!!.node.getChildren(null)
+                                .any { it.text == "WITH" }
+                        ) PostgreSqlType.TIMESTAMP_TIMEZONE else PostgreSqlType.TIMESTAMP
+                        "TIMESTAMPTZ" -> PostgreSqlType.TIMESTAMP_TIMEZONE
+                        "INTERVAL" -> PostgreSqlType.INTERVAL
+                        else -> throw IllegalArgumentException("Unknown date type ${dateDataType!!.text}")
                     }
-                    jsonDataType != null -> PrimitiveType.TEXT
-                    booleanDataType != null -> PrimitiveType.BOOLEAN
-                    blobDataType != null -> PrimitiveType.BLOB
-                    else -> throw IllegalArgumentException("Unknown kotlin type for sql type ${this.text}")
                 }
-            )
-            return type
-        }
+                jsonDataType != null -> PrimitiveType.TEXT
+                booleanDataType != null -> PrimitiveType.BOOLEAN
+                blobDataType != null -> PrimitiveType.BLOB
+                else -> throw IllegalArgumentException("Unknown kotlin type for sql type ${this.text}")
+            }
+        )
+        return type
     }
 }
 
-internal enum class PostgreSqlType(override val javaType: TypeName): DialectType {
+private enum class PostgreSqlType(override val javaType: TypeName): DialectType {
     SMALL_INT(SHORT) {
         override fun decode(value: CodeBlock) = CodeBlock.of("%L.toShort()", value)
 

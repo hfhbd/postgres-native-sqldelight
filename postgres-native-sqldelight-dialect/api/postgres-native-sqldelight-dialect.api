@@ -1,0 +1,14 @@
+public final class app/softwork/sqldelight/postgresdialect/PostgresNativeDialect : app/cash/sqldelight/dialect/api/SqlDelightDialect {
+	public fun <init> ()V
+	public fun getAllowsReferenceCycles ()Z
+	public fun getAsyncRuntimeTypes ()Lapp/cash/sqldelight/dialect/api/RuntimeTypes;
+	public fun getConnectionManager ()Lapp/cash/sqldelight/dialect/api/ConnectionManager;
+	public fun getIcon ()Ljavax/swing/Icon;
+	public fun getMigrationStrategy ()Lapp/cash/sqldelight/dialect/api/SqlGeneratorStrategy;
+	public fun getRuntimeTypes ()Lapp/cash/sqldelight/dialect/api/RuntimeTypes;
+	public fun isSqlite ()Z
+	public fun migrationSquasher (Lapp/cash/sqldelight/dialect/api/MigrationSquasher;)Lapp/cash/sqldelight/dialect/api/MigrationSquasher;
+	public fun setup ()V
+	public fun typeResolver (Lapp/cash/sqldelight/dialect/api/TypeResolver;)Lapp/cash/sqldelight/dialect/api/TypeResolver;
+}
+

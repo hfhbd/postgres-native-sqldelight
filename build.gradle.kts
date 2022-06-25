@@ -5,18 +5,30 @@ plugins {
     `maven-publish`
     signing
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.10.1"
 }
 
 repositories {
     mavenCentral()
 }
 
-allprojects {
+subprojects {
     if (this.name == "testing") {
-        return@allprojects
+        return@subprojects
     }
     plugins.apply("org.gradle.maven-publish")
     plugins.apply("org.gradle.signing")
+
+    afterEvaluate {
+        configure<org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension> {
+            explicitApi()
+            sourceSets {
+                all {
+                    languageSettings.progressiveMode = true
+                }
+            }
+        }
+    }
 
     val emptyJar by tasks.creating(Jar::class) { }
 
