@@ -6,6 +6,11 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 repositories {
     mavenCentral()
     maven(url = "https://www.jetbrains.com/intellij-repository/releases")
