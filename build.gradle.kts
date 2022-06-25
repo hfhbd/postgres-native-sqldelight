@@ -12,6 +12,8 @@ repositories {
     mavenCentral()
 }
 
+group = "app.softwork"
+
 subprojects {
     if (this.name == "testing") {
         return@subprojects
