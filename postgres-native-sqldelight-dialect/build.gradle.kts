@@ -80,7 +80,7 @@ tasks.withType<GenerateModuleMetadata> {
 // Remove dependencies from POM: uber jar has no dependencies
 publishing {
     publications {
-        withType(MavenPublication::class.java) {
+        withType<MavenPublication> {
             if (name == "pluginMaven") {
                 pom.withXml {
                     val pomNode = asNode()
@@ -90,6 +90,9 @@ publishing {
                         (it as Node).parent().remove(it)
                     }
                 }
+            }
+            artifact(tasks.emptyJar) {
+                classifier = "sources"
             }
         }
         create("shadow", MavenPublication::class.java) {
