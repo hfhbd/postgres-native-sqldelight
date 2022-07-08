@@ -1,7 +1,7 @@
 import java.util.*
 
 plugins {
-    kotlin("multiplatform") version "1.7.0" apply false
+    kotlin("multiplatform") version "1.7.10" apply false
     `maven-publish`
     signing
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
