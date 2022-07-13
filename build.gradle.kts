@@ -5,7 +5,7 @@ plugins {
     `maven-publish`
     signing
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.10.1"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.11.0"
 }
 
 repositories {
