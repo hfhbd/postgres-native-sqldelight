@@ -4,5 +4,5 @@ INSERT INTO foo VALUES ?;
 get:
 SELECT * FROM foo;
 
-copy:
+startCopy:
 COPY foo FROM STDIN (FORMAT CSV);
