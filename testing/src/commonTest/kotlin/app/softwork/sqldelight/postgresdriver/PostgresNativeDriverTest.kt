@@ -44,7 +44,7 @@ class PostgresNativeDriverTest {
         )
         val queries = NativePostgres(driver).fooQueries
         NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
-        queries.copy()
+        queries.startCopy()
         val result = driver.copy("42,answer,2020-12-12,12:42:00.0000,2014-08-01T12:01:02.0000,1970-01-01T00:00:00.010Z,PT42S,00000000-0000-0000-0000-000000000000")
         assertEquals(1, result)
         val foo = Foo(
