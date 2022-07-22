@@ -1,3 +1,5 @@
+import app.cash.licensee.*
+import org.jetbrains.kotlin.gradle.dsl.*
 import java.util.*
 
 plugins {
@@ -8,6 +10,7 @@ plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.11.0"
     id("com.github.johnrengelman.shadow") version "7.1.2" apply false
     id("app.cash.sqldelight") version "2.0.0-alpha03" apply false
+    id("app.cash.licensee") version "1.5.0" apply false
 }
 
 repositories {
@@ -20,11 +23,16 @@ subprojects {
     if (this.name == "testing") {
         return@subprojects
     }
-    plugins.apply("org.gradle.maven-publish")
-    plugins.apply("org.gradle.signing")
+
+    plugins.apply("app.cash.licensee")
+    configure<LicenseeExtension> {
+        allow("Apache-2.0")
+        allow("MIT")
+        allowUrl("https://jdbc.postgresql.org/about/license.html")
+    }
 
     afterEvaluate {
-        configure<org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension> {
+        configure<KotlinProjectExtension> {
             explicitApi()
             sourceSets {
                 all {
@@ -34,6 +42,8 @@ subprojects {
         }
     }
 
+    plugins.apply("org.gradle.maven-publish")
+    plugins.apply("org.gradle.signing")
     val emptyJar by tasks.creating(Jar::class) { }
 
     group = "app.softwork"
