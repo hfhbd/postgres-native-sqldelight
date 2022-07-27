@@ -22,7 +22,7 @@ dependencies {
 
     compileOnly("app.cash.sqldelight:dialect-api:2.0.0-alpha03")
 
-    val idea = "221.6008.17"
+    val idea = "222.3345.118"
     compileOnly("com.jetbrains.intellij.platform:core-impl:$idea")
     compileOnly("com.jetbrains.intellij.platform:lang-impl:$idea")
 
