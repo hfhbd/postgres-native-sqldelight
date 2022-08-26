@@ -35,7 +35,7 @@ kotlin {
             dependencies {
                 api("app.cash.sqldelight:runtime:2.0.0-alpha03")
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
-                api("app.softwork:kotlinx-uuid-core:0.0.15")
+                api("app.softwork:kotlinx-uuid-core:0.0.16")
             }
         }
         commonTest {
