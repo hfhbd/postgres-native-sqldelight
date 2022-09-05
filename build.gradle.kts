@@ -7,7 +7,7 @@ plugins {
     `maven-publish`
     signing
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.11.0"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.11.1"
     id("com.github.johnrengelman.shadow") version "7.1.2" apply false
     id("app.cash.sqldelight") version "2.0.0-alpha03" apply false
     id("app.cash.licensee") version "1.5.0" apply false
