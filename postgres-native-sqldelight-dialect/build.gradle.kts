@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    api("app.cash.sqldelight:postgresql-dialect:2.0.0-alpha03")
+    api("app.cash.sqldelight:postgresql-dialect:2.0.0-alpha04")
 
     compileOnly("app.cash.sqldelight:dialect-api:2.0.0-alpha03")
 
