@@ -5,8 +5,8 @@ plugins {
 
 repositories {
     mavenCentral()
-    maven(url = "https://www.jetbrains.com/intellij-repository/releases")
-    maven(url = "https://cache-redirector.jetbrains.com/intellij-dependencies")
+    //maven(url = "https://www.jetbrains.com/intellij-repository/releases")
+    //maven(url = "https://cache-redirector.jetbrains.com/intellij-dependencies")
 }
 
 kotlin {

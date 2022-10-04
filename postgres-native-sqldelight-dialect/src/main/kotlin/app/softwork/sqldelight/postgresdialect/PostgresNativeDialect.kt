@@ -8,7 +8,6 @@ import com.squareup.kotlinpoet.*
 
 public class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
     override val runtimeTypes: RuntimeTypes = RuntimeTypes(
-        driverType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresNativeDriver"),
         cursorType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresCursor"),
         preparedStatementType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresPreparedStatement")
     )
