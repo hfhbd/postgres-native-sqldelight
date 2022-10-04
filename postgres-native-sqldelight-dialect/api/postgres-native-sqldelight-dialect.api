@@ -1,3 +1,31 @@
+public abstract class app/softwork/sqldelight/postgresdialect/BindParameterMixin : app/cash/sqldelight/dialect/grammar/mixins/BindParameterMixin {
+	public fun <init> (Lcom/intellij/lang/ASTNode;)V
+	public fun replaceWith (ZI)Ljava/lang/String;
+}
+
+public class app/softwork/sqldelight/postgresdialect/PostgreSqlNativeParser : com/intellij/lang/LightPsiParser, com/intellij/lang/PsiParser {
+	public fun <init> ()V
+	public static fun bind_parameter_real (Lcom/intellij/lang/PsiBuilder;I)Z
+	public static fun overrides_real (Lcom/intellij/lang/PsiBuilder;I)Z
+	public fun parse (Lcom/intellij/psi/tree/IElementType;Lcom/intellij/lang/PsiBuilder;)Lcom/intellij/lang/ASTNode;
+	public fun parseLight (Lcom/intellij/psi/tree/IElementType;Lcom/intellij/lang/PsiBuilder;)V
+	protected fun parse_root_ (Lcom/intellij/psi/tree/IElementType;Lcom/intellij/lang/PsiBuilder;)Z
+}
+
+public final class app/softwork/sqldelight/postgresdialect/PostgreSqlNativeParserUtil : com/intellij/lang/parser/GeneratedParserUtilBase {
+	public static final field INSTANCE Lapp/softwork/sqldelight/postgresdialect/PostgreSqlNativeParserUtil;
+	public static final fun bindParameterExt (Lcom/intellij/lang/PsiBuilder;ILcom/intellij/lang/parser/GeneratedParserUtilBase$Parser;)Z
+	public final fun getBind_parameter ()Lcom/intellij/lang/parser/GeneratedParserUtilBase$Parser;
+	public final fun getCreateElement ()Lkotlin/jvm/functions/Function1;
+	public final fun getOverrides ()Lcom/intellij/lang/parser/GeneratedParserUtilBase$Parser;
+	public final fun overrideSqlParser ()V
+	public static final fun overridesExt (Lcom/intellij/lang/PsiBuilder;ILcom/intellij/lang/parser/GeneratedParserUtilBase$Parser;)Z
+	public final fun reset ()V
+	public final fun setBind_parameter (Lcom/intellij/lang/parser/GeneratedParserUtilBase$Parser;)V
+	public final fun setCreateElement (Lkotlin/jvm/functions/Function1;)V
+	public final fun setOverrides (Lcom/intellij/lang/parser/GeneratedParserUtilBase$Parser;)V
+}
+
 public final class app/softwork/sqldelight/postgresdialect/PostgresNativeDialect : app/cash/sqldelight/dialect/api/SqlDelightDialect {
 	public fun <init> ()V
 	public fun getAllowsReferenceCycles ()Z
@@ -10,5 +38,44 @@ public final class app/softwork/sqldelight/postgresdialect/PostgresNativeDialect
 	public fun migrationSquasher (Lapp/cash/sqldelight/dialect/api/MigrationSquasher;)Lapp/cash/sqldelight/dialect/api/MigrationSquasher;
 	public fun setup ()V
 	public fun typeResolver (Lapp/cash/sqldelight/dialect/api/TypeResolver;)Lapp/cash/sqldelight/dialect/api/TypeResolver;
+}
+
+public abstract interface class app/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeBindParameter : com/alecstrong/sql/psi/core/psi/SqlBindParameter {
+}
+
+public abstract interface class app/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeOverrides : com/alecstrong/sql/psi/core/psi/SqlCompositeElement {
+	public abstract fun getBindParameter ()Lapp/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeBindParameter;
+}
+
+public abstract interface class app/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeTypes {
+	public static final field BIND_PARAMETER Lcom/intellij/psi/tree/IElementType;
+	public static final field DEFAULT Lcom/intellij/psi/tree/IElementType;
+	public static final field OVERRIDES Lcom/intellij/psi/tree/IElementType;
+}
+
+public class app/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeTypes$Factory {
+	public fun <init> ()V
+	public static fun createElement (Lcom/intellij/lang/ASTNode;)Lcom/intellij/psi/PsiElement;
+}
+
+public class app/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeVisitor : com/intellij/psi/PsiElementVisitor {
+	public fun <init> ()V
+	public fun visitBindParameter (Lapp/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeBindParameter;)V
+	public fun visitOverrides (Lapp/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeOverrides;)V
+	public fun visitSqlBindParameter (Lcom/alecstrong/sql/psi/core/psi/SqlBindParameter;)V
+	public fun visitSqlCompositeElement (Lcom/alecstrong/sql/psi/core/psi/SqlCompositeElement;)V
+}
+
+public class app/softwork/sqldelight/postgresdialect/psi/impl/PostgreSqlNativeBindParameterImpl : app/softwork/sqldelight/postgresdialect/BindParameterMixin, app/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeBindParameter {
+	public fun <init> (Lcom/intellij/lang/ASTNode;)V
+	public fun accept (Lapp/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeVisitor;)V
+	public fun accept (Lcom/intellij/psi/PsiElementVisitor;)V
+}
+
+public class app/softwork/sqldelight/postgresdialect/psi/impl/PostgreSqlNativeOverridesImpl : com/alecstrong/sql/psi/core/psi/SqlCompositeElementImpl, app/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeOverrides {
+	public fun <init> (Lcom/intellij/lang/ASTNode;)V
+	public fun accept (Lapp/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeVisitor;)V
+	public fun accept (Lcom/intellij/psi/PsiElementVisitor;)V
+	public fun getBindParameter ()Lapp/softwork/sqldelight/postgresdialect/psi/PostgreSqlNativeBindParameter;
 }
 

@@ -2,6 +2,7 @@ package app.softwork.sqldelight.postgresdialect
 
 import app.cash.sqldelight.dialect.api.*
 import app.cash.sqldelight.dialects.postgresql.*
+import app.cash.sqldelight.dialects.postgresql.grammar.*
 import app.cash.sqldelight.dialects.postgresql.grammar.psi.*
 import com.alecstrong.sql.psi.core.*
 import com.alecstrong.sql.psi.core.psi.*
@@ -11,6 +12,10 @@ public class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
 
     override fun setup() {
         SqlParserUtil.reset()
+
+        PostgreSqlParserUtil.reset()
+        PostgreSqlParserUtil.overrideSqlParser()
+
         PostgreSqlNativeParserUtil.reset()
         PostgreSqlNativeParserUtil.overrideSqlParser()
     }
