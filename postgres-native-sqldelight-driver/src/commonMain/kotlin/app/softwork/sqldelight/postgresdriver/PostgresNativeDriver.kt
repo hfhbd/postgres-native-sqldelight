@@ -53,7 +53,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                 PQprepare(
                     conn,
                     stmtName = identifier.toString(),
-                    query = sql.replaceQuestionMarks(),
+                    query = sql,
                     nParams = parameters,
                     paramTypes = preparedStatement?.types?.refTo(0)
                 ).check(conn).clear()
@@ -73,7 +73,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
             memScoped {
                 PQexecParams(
                     conn,
-                    command = sql.replaceQuestionMarks(),
+                    command = sql,
                     nParams = parameters,
                     paramValues = preparedStatement?.values(this),
                     paramFormats = preparedStatement?.formats?.refTo(0),
@@ -125,7 +125,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                 PQprepare(
                     conn,
                     stmtName = identifier.toString(),
-                    query = "$cursor ${sql.replaceQuestionMarks()}",
+                    query = "$cursor $sql",
                     nParams = parameters,
                     paramTypes = preparedStatement?.types?.refTo(0)
                 ).check(conn).clear()
@@ -147,7 +147,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
             memScoped {
                 PQexecParams(
                     conn,
-                    command = "$cursor ${sql.replaceQuestionMarks()}",
+                    command = "$cursor $sql",
                     nParams = parameters,
                     paramValues = preparedStatement?.values(this),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
@@ -162,17 +162,9 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         return QueryResult.Value(value = value)
     }
 
-    private fun String.replaceQuestionMarks(): String {
-        var index = 1
-        return replace(replaceQuestionMarks) {
-            "$${index++}"
-        }
-    }
-
     internal companion object {
         const val TEXT_RESULT_FORMAT = 0
         const val BINARY_RESULT_FORMAT = 1
-        val replaceQuestionMarks = "\\?".toRegex()
     }
 
     override fun close() {

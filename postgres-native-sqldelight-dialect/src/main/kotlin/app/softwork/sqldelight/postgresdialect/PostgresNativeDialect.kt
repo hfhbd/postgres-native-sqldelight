@@ -3,10 +3,18 @@ package app.softwork.sqldelight.postgresdialect
 import app.cash.sqldelight.dialect.api.*
 import app.cash.sqldelight.dialects.postgresql.*
 import app.cash.sqldelight.dialects.postgresql.grammar.psi.*
+import com.alecstrong.sql.psi.core.*
 import com.alecstrong.sql.psi.core.psi.*
 import com.squareup.kotlinpoet.*
 
 public class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
+
+    override fun setup() {
+        SqlParserUtil.reset()
+        PostgreSqlNativeParserUtil.reset()
+        PostgreSqlNativeParserUtil.overrideSqlParser()
+    }
+
     override val runtimeTypes: RuntimeTypes = RuntimeTypes(
         cursorType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresCursor"),
         preparedStatementType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresPreparedStatement")
