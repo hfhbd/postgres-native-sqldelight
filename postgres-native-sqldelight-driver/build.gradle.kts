@@ -33,7 +33,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api("app.cash.sqldelight:runtime:2.0.0-alpha03")
+                api("app.cash.sqldelight:runtime:2.0.0-alpha04")
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
                 api("app.softwork:kotlinx-uuid-core:0.0.17")
             }
