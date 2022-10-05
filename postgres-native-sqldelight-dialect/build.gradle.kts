@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm")
     `maven-publish`
     id("com.github.johnrengelman.shadow")
+    id("com.alecstrong.grammar.kit.composer")
 }
 
 java {
@@ -15,6 +16,14 @@ repositories {
     mavenCentral()
     maven(url = "https://www.jetbrains.com/intellij-repository/releases")
     maven(url = "https://cache-redirector.jetbrains.com/intellij-dependencies")
+    maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/")
+    maven(url = "https://maven.pkg.jetbrains.space/public/p/ktor/eap")
+}
+
+val idea = "211.7628.21"
+
+grammarKit {
+    intellijRelease.set(idea)
 }
 
 dependencies {
@@ -22,11 +31,10 @@ dependencies {
 
     compileOnly("app.cash.sqldelight:dialect-api:2.0.0-alpha04")
 
-    val idea = "222.4167.33"
-    compileOnly("com.jetbrains.intellij.platform:core-impl:$idea")
+    compileOnly("com.jetbrains.intellij.platform:core-ui:$idea")
     compileOnly("com.jetbrains.intellij.platform:lang-impl:$idea")
 
-    testImplementation("com.jetbrains.intellij.platform:core-impl:$idea")
+    testImplementation("com.jetbrains.intellij.platform:core-ui:$idea")
     testImplementation("com.jetbrains.intellij.platform:lang-impl:$idea")
     testImplementation(kotlin("test-junit"))
 }
