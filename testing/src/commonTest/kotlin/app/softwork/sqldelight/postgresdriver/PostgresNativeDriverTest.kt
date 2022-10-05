@@ -29,7 +29,16 @@ class PostgresNativeDriverTest {
             interval = 42.seconds,
             uuid = UUID.NIL
         )
-        queries.create(foo)
+        queries.create(
+            a = foo.a,
+            b = foo.b,
+            date = foo.date,
+            time = foo.time,
+            timestamp = foo.timestamp,
+            instant = foo.instant,
+            interval = foo.interval,
+            uuid = foo.uuid
+        )
         assertEquals(foo, queries.get().executeAsOne())
     }
 

@@ -1,5 +1,5 @@
 create:
-INSERT INTO foo VALUES ?;
+INSERT INTO foo VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 get:
 SELECT * FROM foo;
