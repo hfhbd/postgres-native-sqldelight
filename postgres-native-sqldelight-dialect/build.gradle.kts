@@ -20,7 +20,7 @@ repositories {
     maven(url = "https://maven.pkg.jetbrains.space/public/p/ktor/eap")
 }
 
-val idea = "211.7628.21"
+val idea = "222.4345.23"
 
 grammarKit {
     intellijRelease.set(idea)
