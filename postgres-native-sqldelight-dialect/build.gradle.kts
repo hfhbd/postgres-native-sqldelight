@@ -1,4 +1,5 @@
 import groovy.util.*
+import org.jetbrains.grammarkit.tasks.*
 
 plugins {
     kotlin("jvm")
@@ -20,10 +21,16 @@ repositories {
     maven(url = "https://maven.pkg.jetbrains.space/public/p/ktor/eap")
 }
 
-val idea = "211.7628.21"
+val idea = "222.4345.24"
 
 grammarKit {
     intellijRelease.set(idea)
+}
+
+// https://youtrack.jetbrains.com/issue/IDEA-301677
+val grammar = configurations.create("grammar") {
+    isCanBeResolved = true
+    isCanBeConsumed = false
 }
 
 dependencies {
@@ -31,11 +38,16 @@ dependencies {
 
     compileOnly("app.cash.sqldelight:dialect-api:2.0.0-alpha04")
 
-    compileOnly("com.jetbrains.intellij.platform:core-ui:$idea")
-    compileOnly("com.jetbrains.intellij.platform:lang-impl:$idea")
+    grammar("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    compileOnly("com.jetbrains.intellij.platform:core-impl:$idea")
+    compileOnly("com.jetbrains.intellij.platform:util-ui:$idea")
+    compileOnly("com.jetbrains.intellij.platform:project-model-impl:$idea")
+    compileOnly("com.jetbrains.intellij.platform:analysis-impl:$idea")
 
-    testImplementation("com.jetbrains.intellij.platform:core-ui:$idea")
-    testImplementation("com.jetbrains.intellij.platform:lang-impl:$idea")
+    testImplementation("com.jetbrains.intellij.platform:core-impl:$idea")
+    testImplementation("com.jetbrains.intellij.platform:util-ui:$idea")
+    testImplementation("com.jetbrains.intellij.platform:project-model-impl:$idea")
+    testImplementation("com.jetbrains.intellij.platform:analysis-impl:$idea")
     testImplementation(kotlin("test-junit"))
 }
 
@@ -49,6 +61,18 @@ configurations.all {
     exclude(group = "com.jetbrains.rd")
     exclude(group = "com.github.jetbrains", module = "jetCheck")
     exclude(group = "org.roaringbitmap")
+}
+
+tasks {
+    val generateapp_softwork_sqldelight_postgresdialect_PostgreSqlNativeParser by getting(GenerateParserTask::class) {
+        classpath.from(grammar)
+    }
+    generateLexer {
+        classpath.from(grammar)
+    }
+    generateParser {
+        classpath.from(grammar)
+    }
 }
 
 tasks.shadowJar {
