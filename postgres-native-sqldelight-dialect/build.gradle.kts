@@ -67,9 +67,6 @@ tasks {
     val generateapp_softwork_sqldelight_postgresdialect_PostgreSqlNativeParser by getting(GenerateParserTask::class) {
         classpath.from(grammar)
     }
-    generateLexer {
-        classpath.from(grammar)
-    }
     generateParser {
         classpath.from(grammar)
     }
