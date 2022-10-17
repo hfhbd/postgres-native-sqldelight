@@ -1,6 +1,7 @@
-insert:
+insertAndGet:
 INSERT INTO users(email, username, bio, image)
-VALUES (?, ?, ?, ?);
+VALUES (?, ?, ?, ?)
+RETURNING id;
 
 selectByUsername:
 SELECT email, username, bio, image

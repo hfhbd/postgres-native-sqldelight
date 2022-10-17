@@ -66,7 +66,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                     paramValues = preparedStatement?.values(this),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
-                    resultFormat = BINARY_RESULT_FORMAT
+                    resultFormat = TEXT_RESULT_FORMAT
                 )
             }
         } else {
@@ -78,7 +78,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                     paramValues = preparedStatement?.values(this),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
-                    resultFormat = BINARY_RESULT_FORMAT,
+                    resultFormat = TEXT_RESULT_FORMAT,
                     paramTypes = preparedStatement?.types?.refTo(0)
                 )
             }
@@ -106,7 +106,34 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
 
     private fun Int.escapeNegative(): String = if(this < 0) "_${toString().substring(1)}" else toString()
 
+    private fun preparedStatement(
+        parameters: Int,
+        binders: (SqlPreparedStatement.() -> Unit)?
+    ): PostgresPreparedStatement? = if (parameters != 0) {
+        PostgresPreparedStatement(parameters).apply {
+            if (binders != null) {
+                binders()
+            }
+        }
+    } else null
+
     override fun <R> executeQuery(
+        identifier: Int?,
+        sql: String,
+        mapper: (SqlCursor) -> R,
+        parameters: Int,
+        binders: (SqlPreparedStatement.() -> Unit)?
+    ): QueryResult.Value<R> = if (sql.startsWith("INSERT")) {
+        executeInsertReturningQuery(
+            identifier = identifier, sql = sql, mapper = mapper, parameters = parameters, binders = binders
+        )
+    } else {
+        executeNormalQuery(
+            identifier = identifier, sql = sql, mapper = mapper, parameters = parameters, binders = binders
+        )
+    }
+
+    private fun <R> executeNormalQuery(
         identifier: Int?,
         sql: String,
         mapper: (SqlCursor) -> R,
@@ -115,23 +142,10 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
     ): QueryResult.Value<R> {
         val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.escapeNegative()}"
         val cursor = "DECLARE $cursorName CURSOR FOR"
-        val preparedStatement = if (parameters != 0) {
-            PostgresPreparedStatement(parameters).apply {
-                if (binders != null) {
-                    binders()
-                }
-            }
-        } else null
+
+        val preparedStatement = preparedStatement(parameters, binders)
         val result = if (identifier != null) {
-            if (!preparedStatementExists(identifier)) {
-                PQprepare(
-                    conn,
-                    stmtName = identifier.toString(),
-                    query = "$cursor $sql",
-                    nParams = parameters,
-                    paramTypes = preparedStatement?.types?.refTo(0)
-                ).check(conn).clear()
-            }
+            checkPreparedStatement(identifier, sql, parameters, preparedStatement)
             conn.exec("BEGIN")
             memScoped {
                 PQexecPrepared(
@@ -141,7 +155,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                     paramValues = preparedStatement?.values(this),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
                     paramFormats = preparedStatement?.formats?.refTo(0),
-                    resultFormat = BINARY_RESULT_FORMAT
+                    resultFormat = TEXT_RESULT_FORMAT
                 )
             }
         } else {
@@ -155,12 +169,69 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                     paramLengths = preparedStatement?.lengths?.refTo(0),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramTypes = preparedStatement?.types?.refTo(0),
-                    resultFormat = BINARY_RESULT_FORMAT
+                    resultFormat = TEXT_RESULT_FORMAT
                 )
             }
         }.check(conn)
 
-        val value = PostgresCursor(result, cursorName, conn).use(mapper)
+        val value = PostgresCursor.MultiCursor(result, cursorName, conn).use(mapper)
+        return QueryResult.Value(value = value)
+    }
+
+    private fun checkPreparedStatement(
+        identifier: Int,
+        sql: String,
+        parameters: Int,
+        preparedStatement: PostgresPreparedStatement?
+    ) {
+        if (!preparedStatementExists(identifier)) {
+            PQprepare(
+                conn,
+                stmtName = identifier.toString(),
+                query = sql,
+                nParams = parameters,
+                paramTypes = preparedStatement?.types?.refTo(0)
+            ).check(conn).clear()
+        }
+    }
+
+    private fun <R> executeInsertReturningQuery(
+        identifier: Int?,
+        sql: String,
+        mapper: (SqlCursor) -> R,
+        parameters: Int,
+        binders: (SqlPreparedStatement.() -> Unit)?
+    ): QueryResult.Value<R> {
+        val preparedStatement = preparedStatement(parameters, binders)
+        val result = if (identifier != null) {
+            checkPreparedStatement(identifier, sql, parameters, preparedStatement)
+            memScoped {
+                PQexecPrepared(
+                    conn,
+                    stmtName = identifier.toString(),
+                    nParams = parameters,
+                    paramValues = preparedStatement?.values(this),
+                    paramLengths = preparedStatement?.lengths?.refTo(0),
+                    paramFormats = preparedStatement?.formats?.refTo(0),
+                    resultFormat = TEXT_RESULT_FORMAT
+                )
+            }
+        } else {
+            memScoped {
+                PQexecParams(
+                    conn,
+                    command = sql,
+                    nParams = parameters,
+                    paramValues = preparedStatement?.values(this),
+                    paramLengths = preparedStatement?.lengths?.refTo(0),
+                    paramFormats = preparedStatement?.formats?.refTo(0),
+                    paramTypes = preparedStatement?.types?.refTo(0),
+                    resultFormat = TEXT_RESULT_FORMAT
+                )
+            }
+        }.check(conn)
+
+        val value = PostgresCursor.SingleCursor(result).use(mapper)
         return QueryResult.Value(value = value)
     }
 
@@ -232,18 +303,44 @@ private fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresult
     return this!!
 }
 
-/**
- * Must be inside a transaction!
- */
-public class PostgresCursor(
-    private var result: CPointer<PGresult>,
-    private val name: String,
-    private val conn: CPointer<PGconn>
+public sealed class PostgresCursor(
+    internal var result: CPointer<PGresult>
 ) : SqlCursor, Closeable {
-    override fun close() {
-        result.clear()
-        conn.exec("CLOSE $name")
-        conn.exec("END")
+
+    /**
+     * Must be inside a transaction!
+     */
+    internal class MultiCursor(
+        result: CPointer<PGresult>,
+        private val name: String,
+        private val conn: CPointer<PGconn>
+    ) : PostgresCursor(result) {
+        override fun close() {
+            result.clear()
+            conn.exec("CLOSE $name")
+            conn.exec("END")
+        }
+
+        override fun next(): Boolean {
+            result = PQexec(conn, "FETCH NEXT IN $name").check(conn)
+            return PQcmdTuples(result)!!.toKString().toInt() == 1
+        }
+    }
+
+    internal class SingleCursor(
+        result: CPointer<PGresult>
+    ) : PostgresCursor(result) {
+        override fun close() {
+            result.clear()
+        }
+
+        private var hasNext = true
+        override fun next() = if (hasNext) {
+            hasNext = false
+            true
+        } else {
+            false
+        }
     }
 
     override fun getBoolean(index: Int): Boolean? = getString(index)?.toBoolean()
@@ -302,11 +399,6 @@ public class PostgresCursor(
 
     public fun getInterval(index: Int): Duration? = getString(index)?.let { Duration.parseIsoString(it) }
     public fun getUUID(index: Int): UUID? = getString(index)?.toUUID()
-
-    override fun next(): Boolean {
-        result = PQexec(conn, "FETCH NEXT IN $name").check(conn)
-        return PQcmdTuples(result)!!.toKString().toInt() == 1
-    }
 }
 
 public class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatement {
