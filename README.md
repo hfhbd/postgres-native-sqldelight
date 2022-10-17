@@ -6,6 +6,8 @@ A native Postgres driver for SqlDelight.
 
 ## Install
 
+You need `libpq` installed and available in your `$PATH`.
+
 This package is uploaded to MavenCentral and supports macOS, linuxX64.
 Windows is currently not supported.
 
