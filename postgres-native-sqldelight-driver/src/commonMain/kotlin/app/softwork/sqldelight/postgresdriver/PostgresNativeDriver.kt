@@ -111,7 +111,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): QueryResult.Value<R> {
-        val cursorName = if (identifier == null) "myCursor" else "cursor$identifier"
+        val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.toString().replace("-", "_")}"
         val cursor = "DECLARE $cursorName CURSOR FOR"
         val preparedStatement = if (parameters != 0) {
             PostgresPreparedStatement(parameters).apply {

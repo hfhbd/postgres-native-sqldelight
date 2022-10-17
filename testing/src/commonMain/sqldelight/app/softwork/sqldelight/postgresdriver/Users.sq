@@ -1,0 +1,8 @@
+insert:
+INSERT INTO users(email, username, bio, image)
+VALUES (?, ?, ?, ?);
+
+selectByUsername:
+SELECT email, username, bio, image
+FROM users
+WHERE username = :username;
