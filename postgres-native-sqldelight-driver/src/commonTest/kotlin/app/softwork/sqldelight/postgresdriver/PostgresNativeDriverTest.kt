@@ -1,7 +1,13 @@
 package app.softwork.sqldelight.postgresdriver
 
+import app.cash.sqldelight.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.test.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
+@ExperimentalCoroutinesApi
 class PostgresNativeDriverTest {
     @Test
     fun simpleTest() {
@@ -207,5 +213,108 @@ class PostgresNativeDriverTest {
         driver.execute(-42, "COPY copying FROM STDIN (FORMAT CSV);", 0)
         val results = driver.copy("1\n2\n")
         assertEquals(2, results)
+    }
+
+    @Test
+    fun remoteListenerTest() = runTest {
+        val other = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password",
+            listenerSupport = ListenerSupport.Remote(backgroundScope)
+        )
+
+        val driver = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password",
+            listenerSupport = ListenerSupport.Remote(backgroundScope)
+        )
+
+        val results = MutableStateFlow(0)
+        val listener = object : Query.Listener {
+            override fun queryResultsChanged() {
+                results.update { it + 1 }
+            }
+        }
+        driver.addListener(listener, arrayOf("foo", "bar"))
+        withContext(Dispatchers.Default) {
+            val setupSocket = 2.seconds
+            delay(setupSocket)
+        }
+        other.notifyListeners(arrayOf("foo"))
+
+        other.notifyListeners(arrayOf("foo", "bar"))
+        other.notifyListeners(arrayOf("bar"))
+        withContext(Dispatchers.Default) {
+            val waitForRemoteNotifications = 2.seconds
+            delay(waitForRemoteNotifications)
+        }
+
+        driver.removeListener(listener, arrayOf("foo", "bar"))
+        driver.notifyListeners(arrayOf("foo"))
+        driver.notifyListeners(arrayOf("bar"))
+
+        withContext(Dispatchers.Default) {
+            val waitForRemoteNotifications = 2.seconds
+            delay(waitForRemoteNotifications)
+        }
+        assertEquals(4, results.value)
+
+        other.close()
+        driver.close()
+    }
+
+    @Test
+    fun localListenerTest() = runTest {
+        val notifications = MutableSharedFlow<String>()
+        val notificationList = async {
+            notifications.take(4).toList()
+        }
+
+        val driver = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password",
+            listenerSupport = ListenerSupport.Local(
+                this,
+                notifications,
+            ) {
+                notifications.emit(it)
+            }
+        )
+
+        val results = MutableStateFlow(0)
+        val listener = object : Query.Listener {
+            override fun queryResultsChanged() {
+                results.update { it + 1 }
+            }
+        }
+        driver.addListener(listener, arrayOf("foo", "bar"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("foo"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("foo", "bar"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("bar"))
+        runCurrent()
+
+        driver.removeListener(listener, arrayOf("foo", "bar"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("foo"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("bar"))
+        runCurrent()
+
+        assertEquals(4, results.value)
+        assertEquals(listOf("foo", "foo", "bar", "bar"), notificationList.await())
+
+        driver.close()
     }
 }

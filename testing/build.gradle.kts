@@ -19,11 +19,13 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.postgresNativeSqldelightDriver)
+                implementation("app.cash.sqldelight:coroutines-extensions:2.0.0-alpha04")
             }
         }
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
             }
         }
     }

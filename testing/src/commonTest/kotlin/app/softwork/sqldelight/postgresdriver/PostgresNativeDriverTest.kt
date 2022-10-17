@@ -1,5 +1,9 @@
 package app.softwork.sqldelight.postgresdriver
 
+import app.cash.sqldelight.coroutines.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.test.*
 import kotlinx.datetime.*
 import kotlinx.uuid.*
 import kotlin.test.*
@@ -68,9 +72,9 @@ class PostgresNativeDriverTest {
     fun userTest() {
         val queries = NativePostgres(driver).usersQueries
         NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
-        val id = queries.insertAndGet("test@test", "test", "bio", "").executeAsOne()
+        val id = queries.insertAndGet("test@test", "test", "bio", "", null).executeAsOne()
         assertEquals(1, id)
-        val id2 = queries.insertAndGet("test2@test", "test2", "bio2", "").executeAsOne()
+        val id2 = queries.insertAndGet("test2@test", "test2", "bio2", "", null).executeAsOne()
         assertEquals(2, id2)
         val testUser = queries.selectByUsername("test").executeAsOne()
         assertEquals(
@@ -82,5 +86,147 @@ class PostgresNativeDriverTest {
             ),
             testUser
         )
+    }
+
+    @Test
+    fun remoteListenerTest() = runTest(dispatchTimeoutMs = 10.seconds.inWholeMilliseconds) {
+        val client = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password",
+            listenerSupport = ListenerSupport.Remote(backgroundScope) {
+                it + it
+            }
+        )
+
+        val server = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password",
+            listenerSupport = ListenerSupport.Remote(backgroundScope) {
+                it + it
+            }
+        )
+
+        val db = NativePostgres(client)
+        NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
+
+        db.fooQueries.create(
+            a = 42,
+            b = "answer",
+            date = LocalDate(2020, Month.DECEMBER, 12),
+            time = LocalTime(12, 42, 0, 0),
+            timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
+            instant = Instant.fromEpochMilliseconds(10L),
+            interval = 42.seconds,
+            uuid = UUID.NIL
+        )
+        val userQueries = db.usersQueries
+        val id = userQueries.insertAndGet("foo", "foo", "foo", "", 42).executeAsOne()
+
+        val users = async {
+            db.usersQueries.selectByFoo(42)
+                .asFlow().mapToOne(coroutineContext)
+                .take(2).toList()
+        }
+        withContext(Dispatchers.Default) {
+            val waitForRemoteNotifications = 2.seconds
+            delay(waitForRemoteNotifications)
+        }
+        runCurrent()
+
+        NativePostgres(server).usersQueries.updateWhereFoo("foo2", 42)
+        withContext(Dispatchers.Default) {
+            val waitForRemoteNotifications = 2.seconds
+            delay(waitForRemoteNotifications)
+        }
+        runCurrent()
+
+        assertEquals(
+            listOf(
+                Users(
+                    id,
+                    "foo",
+                    "foo",
+                    "foo",
+                    "",
+                    42
+                ), Users(
+                    id,
+                    "foo2",
+                    "foo",
+                    "foo",
+                    "",
+                    42
+                )
+            ), users.await()
+        )
+
+        client.close()
+        server.close()
+    }
+
+    @Test
+    fun localListenerTest() = runTest(dispatchTimeoutMs = 10.seconds.inWholeMilliseconds) {
+        val client = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password",
+            listenerSupport = ListenerSupport.Local(backgroundScope)
+        )
+
+        val db = NativePostgres(client)
+        NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
+
+        db.fooQueries.create(
+            a = 42,
+            b = "answer",
+            date = LocalDate(2020, Month.DECEMBER, 12),
+            time = LocalTime(12, 42, 0, 0),
+            timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
+            instant = Instant.fromEpochMilliseconds(10L),
+            interval = 42.seconds,
+            uuid = UUID.NIL
+        )
+        val userQueries = db.usersQueries
+        val id = userQueries.insertAndGet("foo", "foo", "foo", "", 42).executeAsOne()
+
+        val users = async {
+            db.usersQueries.selectByFoo(42)
+                .asFlow().mapToOne(coroutineContext)
+                .take(2).toList()
+        }
+        runCurrent()
+
+        userQueries.updateWhereFoo("foo2", 42)
+        runCurrent()
+
+        assertEquals(
+            listOf(
+                Users(
+                    id,
+                    "foo",
+                    "foo",
+                    "foo",
+                    "",
+                    42
+                ), Users(
+                    id,
+                    "foo2",
+                    "foo",
+                    "foo",
+                    "",
+                    42
+                )
+            ), users.await()
+        )
+
+        client.close()
     }
 }
