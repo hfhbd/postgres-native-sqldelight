@@ -123,7 +123,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         sql: String,
         mapper: (SqlCursor) -> R,
         parameters: Int,
-        fetchSize: Int = 0,
+        fetchSize: Int = 1,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): QueryResult.Value<R> {
         val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.escapeNegative()}"
@@ -131,7 +131,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
 
         val preparedStatement = preparedStatement(parameters, binders)
         val result = if (identifier != null) {
-            checkPreparedStatement(identifier, sql, parameters, preparedStatement)
+            checkPreparedStatement(identifier, "$cursor $sql", parameters, preparedStatement)
             conn.exec("BEGIN")
             memScoped {
                 PQexecPrepared(

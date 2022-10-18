@@ -13,7 +13,10 @@ class PostgresNativeDriverTest {
             password = "password"
         )
         assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS baz;", parameters = 0).value)
-        assertEquals(0, driver.execute(null, "CREATE TABLE baz(a int primary key, foo text, b bytea);", parameters = 0).value)
+        assertEquals(
+            0,
+            driver.execute(null, "CREATE TABLE baz(a INT PRIMARY KEY, foo TEXT, b BYTEA);", parameters = 0).value
+        )
         repeat(5) {
             val result = driver.execute(null, "INSERT INTO baz VALUES ($it)", parameters = 0)
             assertEquals(1, result.value)
@@ -29,7 +32,7 @@ class PostgresNativeDriverTest {
             bindBytes(5, byteArrayOf(16.toByte(), 12.toByte()))
         }.value
         assertEquals(2, result)
-        val notPrepared = driver.executeQuery(null, "SELECT * from baz limit 1;", parameters = 0, mapper = {
+        val notPrepared = driver.executeQuery(null, "SELECT * FROM baz LIMIT 1;", parameters = 0, mapper = {
             assertTrue(it.next())
             Simple(
                 index = it.getLong(0)!!.toInt(),
@@ -57,6 +60,7 @@ class PostgresNativeDriverTest {
             }
         ).value
 
+        assertEquals(7, preparedStatement.size)
         assertEquals(
             List(5) {
                 Simple(it, null, null)
@@ -66,6 +70,75 @@ class PostgresNativeDriverTest {
             ),
             preparedStatement
         )
+
+        expect(7) {
+            val cursorList = driver.executeQueryWithNativeCursor(
+                -99,
+                "SELECT * FROM baz",
+                fetchSize = 4,
+                parameters = 0,
+                binders = null,
+                mapper = {
+                    buildList {
+                        while (it.next()) {
+                            add(
+                                Simple(
+                                    index = it.getLong(0)!!.toInt(),
+                                    name = it.getString(1),
+                                    byteArray = it.getBytes(2)
+                                )
+                            )
+                        }
+                    }
+                }).value
+            cursorList.size
+        }
+
+        expect(7) {
+            val cursorList = driver.executeQueryWithNativeCursor(
+                -5,
+                "SELECT * FROM baz",
+                fetchSize = 1,
+                parameters = 0,
+                binders = null,
+                mapper = {
+                    buildList {
+                        while (it.next()) {
+                            add(
+                                Simple(
+                                    index = it.getLong(0)!!.toInt(),
+                                    name = it.getString(1),
+                                    byteArray = it.getBytes(2)
+                                )
+                            )
+                        }
+                    }
+                }).value
+            cursorList.size
+        }
+
+        expect(0) {
+            val cursorList = driver.executeQueryWithNativeCursor(
+                -100,
+                "SELECT * FROM baz WHERE a = -1",
+                fetchSize = 1,
+                parameters = 0,
+                binders = null,
+                mapper = {
+                    buildList {
+                        while (it.next()) {
+                            add(
+                                Simple(
+                                    index = it.getLong(0)!!.toInt(),
+                                    name = it.getString(1),
+                                    byteArray = it.getBytes(2)
+                                )
+                            )
+                        }
+                    }
+                }).value
+            cursorList.size
+        }
     }
 
     private data class Simple(val index: Int, val name: String?, val byteArray: ByteArray?) {
