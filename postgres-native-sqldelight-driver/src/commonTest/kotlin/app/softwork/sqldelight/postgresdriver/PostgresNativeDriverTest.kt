@@ -131,7 +131,7 @@ class PostgresNativeDriverTest {
         )
         assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS copying;", parameters = 0).value)
         assertEquals(0, driver.execute(null, "CREATE TABLE copying(a int primary key);", parameters = 0).value)
-        driver.execute(42, "COPY copying FROM STDIN (FORMAT CSV);", 0)
+        driver.execute(-42, "COPY copying FROM STDIN (FORMAT CSV);", 0)
         val results = driver.copy("1\n2\n")
         assertEquals(2, results)
     }
