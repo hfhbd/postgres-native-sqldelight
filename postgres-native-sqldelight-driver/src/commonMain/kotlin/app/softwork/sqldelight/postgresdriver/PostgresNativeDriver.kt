@@ -104,6 +104,8 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         return result.value != null
     }
 
+    private fun Int.escapeNegative(): String = if(this < 0) "_${toString().substring(1)}" else toString()
+
     override fun <R> executeQuery(
         identifier: Int?,
         sql: String,
@@ -111,7 +113,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): QueryResult.Value<R> {
-        val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.toString().replace("-", "_")}"
+        val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.escapeNegative()}"
         val cursor = "DECLARE $cursorName CURSOR FOR"
         val preparedStatement = if (parameters != 0) {
             PostgresPreparedStatement(parameters).apply {
