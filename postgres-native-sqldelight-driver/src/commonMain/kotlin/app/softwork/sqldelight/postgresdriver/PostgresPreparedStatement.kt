@@ -6,7 +6,7 @@ import kotlinx.datetime.*
 import kotlinx.uuid.*
 import kotlin.time.*
 
-public class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatement {
+public class PostgresPreparedStatement internal constructor(private val parameters: Int) : SqlPreparedStatement {
     internal fun values(scope: AutofreeScope): CValuesRef<CPointerVar<ByteVar>> = createValues(parameters) {
         value = when (val value = _values[it]) {
             null -> null
