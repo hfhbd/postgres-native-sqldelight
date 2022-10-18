@@ -123,6 +123,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         sql: String,
         mapper: (SqlCursor) -> R,
         parameters: Int,
+        fetchSize: Int = 0,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): QueryResult.Value<R> {
         val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.escapeNegative()}"
@@ -159,7 +160,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
             }
         }.check(conn)
 
-        val value = PostgresCursor.RealCursor(result, cursorName, conn).use(mapper)
+        val value = PostgresCursor.RealCursor(result, cursorName, conn, fetchSize).use(mapper)
         return QueryResult.Value(value = value)
     }
 
@@ -291,7 +292,7 @@ private fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresult
 public sealed class PostgresCursor(
     internal var result: CPointer<PGresult>
 ) : SqlCursor, Closeable {
-    internal abstract val currentRow: Int
+    internal abstract val currentRowIndex: Int
 
     /**
      * Must be inside a transaction!
@@ -299,7 +300,8 @@ public sealed class PostgresCursor(
     internal class RealCursor(
         result: CPointer<PGresult>,
         private val name: String,
-        private val conn: CPointer<PGconn>
+        private val conn: CPointer<PGconn>,
+        private val fetchSize: Int
     ) : PostgresCursor(result) {
         override fun close() {
             result.clear()
@@ -307,11 +309,21 @@ public sealed class PostgresCursor(
             conn.exec("END")
         }
 
-        override val currentRow = 0
+        override var currentRowIndex = -1
+        private var maxRowIndex = -1
 
         override fun next(): Boolean {
-            result = PQexec(conn, "FETCH NEXT IN $name").check(conn)
-            return PQcmdTuples(result)!!.toKString().toInt() == 1
+            if (currentRowIndex == maxRowIndex) {
+                currentRowIndex = -1
+            }
+            if (currentRowIndex == -1) {
+                result = PQexec(conn, "FETCH $fetchSize IN $name").check(conn)
+                maxRowIndex = PQntuples(result) - 1
+            }
+            return if (currentRowIndex < maxRowIndex) {
+                currentRowIndex += 1
+                true
+            } else false
         }
     }
 
@@ -322,27 +334,28 @@ public sealed class PostgresCursor(
             result.clear()
         }
 
-        override val currentRow get() = row
+        private val maxRowIndex = PQntuples(result) - 1
+        override var currentRowIndex = -1
 
-        private val rows = PQntuples(result)
-        private var row = 0
-        override fun next() = if (row < rows) {
-            row += 1
-            true
-        } else {
-            false
+        override fun next(): Boolean {
+            return if (currentRowIndex < maxRowIndex) {
+                currentRowIndex += 1
+                true
+            } else {
+                false
+            }
         }
     }
 
     override fun getBoolean(index: Int): Boolean? = getString(index)?.toBoolean()
 
     override fun getBytes(index: Int): ByteArray? {
-        val isNull = PQgetisnull(result, tup_num = currentRow, field_num = index) == 1
+        val isNull = PQgetisnull(result, tup_num = currentRowIndex, field_num = index) == 1
         return if (isNull) {
             null
         } else {
-            val bytes = PQgetvalue(result, tup_num = currentRow, field_num = index)!!
-            val length = PQgetlength(result, tup_num = currentRow, field_num = index)
+            val bytes = PQgetvalue(result, tup_num = currentRowIndex, field_num = index)!!
+            val length = PQgetlength(result, tup_num = currentRowIndex, field_num = index)
             bytes.fromHex(length)
         }
     }
@@ -372,11 +385,11 @@ public sealed class PostgresCursor(
     override fun getLong(index: Int): Long? = getString(index)?.toLong()
 
     override fun getString(index: Int): String? {
-        val isNull = PQgetisnull(result, tup_num = currentRow, field_num = index) == 1
+        val isNull = PQgetisnull(result, tup_num = currentRowIndex, field_num = index) == 1
         return if (isNull) {
             null
         } else {
-            val value = PQgetvalue(result, tup_num = currentRow, field_num = index)
+            val value = PQgetvalue(result, tup_num = currentRowIndex, field_num = index)
             value!!.toKString()
         }
     }
