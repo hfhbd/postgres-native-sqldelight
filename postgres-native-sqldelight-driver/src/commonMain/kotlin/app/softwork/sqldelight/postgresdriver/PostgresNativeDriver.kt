@@ -87,11 +87,12 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         return QueryResult.Value(value = result.rows)
     }
 
-    private val CPointer<PGresult>.rows: Long get() {
-        val rows = PQcmdTuples(this)!!.toKString()
-        clear()
-        return rows.toLongOrNull() ?: 0
-    }
+    private val CPointer<PGresult>.rows: Long
+        get() {
+            val rows = PQcmdTuples(this)!!.toKString()
+            clear()
+            return rows.toLongOrNull() ?: 0
+        }
 
     private fun preparedStatementExists(identifier: Int): Boolean {
         val result =
@@ -104,7 +105,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         return result.value != null
     }
 
-    private fun Int.escapeNegative(): String = if(this < 0) "_${toString().substring(1)}" else toString()
+    private fun Int.escapeNegative(): String = if (this < 0) "_${toString().substring(1)}" else toString()
 
     private fun preparedStatement(
         parameters: Int,
@@ -117,23 +118,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         }
     } else null
 
-    override fun <R> executeQuery(
-        identifier: Int?,
-        sql: String,
-        mapper: (SqlCursor) -> R,
-        parameters: Int,
-        binders: (SqlPreparedStatement.() -> Unit)?
-    ): QueryResult.Value<R> = if (sql.startsWith("INSERT")) {
-        executeInsertReturningQuery(
-            identifier = identifier, sql = sql, mapper = mapper, parameters = parameters, binders = binders
-        )
-    } else {
-        executeNormalQuery(
-            identifier = identifier, sql = sql, mapper = mapper, parameters = parameters, binders = binders
-        )
-    }
-
-    private fun <R> executeNormalQuery(
+    public fun <R> executeQueryWithNativeCursor(
         identifier: Int?,
         sql: String,
         mapper: (SqlCursor) -> R,
@@ -174,7 +159,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
             }
         }.check(conn)
 
-        val value = PostgresCursor.MultiCursor(result, cursorName, conn).use(mapper)
+        val value = PostgresCursor.RealCursor(result, cursorName, conn).use(mapper)
         return QueryResult.Value(value = value)
     }
 
@@ -195,7 +180,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         }
     }
 
-    private fun <R> executeInsertReturningQuery(
+    override fun <R> executeQuery(
         identifier: Int?,
         sql: String,
         mapper: (SqlCursor) -> R,
@@ -231,7 +216,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
             }
         }.check(conn)
 
-        val value = PostgresCursor.SingleCursor(result).use(mapper)
+        val value = PostgresCursor.NoCursor(result).use(mapper)
         return QueryResult.Value(value = value)
     }
 
@@ -306,11 +291,12 @@ private fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresult
 public sealed class PostgresCursor(
     internal var result: CPointer<PGresult>
 ) : SqlCursor, Closeable {
+    internal abstract val currentRow: Int
 
     /**
      * Must be inside a transaction!
      */
-    internal class MultiCursor(
+    internal class RealCursor(
         result: CPointer<PGresult>,
         private val name: String,
         private val conn: CPointer<PGconn>
@@ -321,22 +307,27 @@ public sealed class PostgresCursor(
             conn.exec("END")
         }
 
+        override val currentRow = 0
+
         override fun next(): Boolean {
             result = PQexec(conn, "FETCH NEXT IN $name").check(conn)
             return PQcmdTuples(result)!!.toKString().toInt() == 1
         }
     }
 
-    internal class SingleCursor(
+    internal class NoCursor(
         result: CPointer<PGresult>
     ) : PostgresCursor(result) {
         override fun close() {
             result.clear()
         }
 
-        private var hasNext = true
-        override fun next() = if (hasNext) {
-            hasNext = false
+        override val currentRow get() = row
+
+        private val rows = PQntuples(result)
+        private var row = 0
+        override fun next() = if (row < rows) {
+            row += 1
             true
         } else {
             false
@@ -346,12 +337,12 @@ public sealed class PostgresCursor(
     override fun getBoolean(index: Int): Boolean? = getString(index)?.toBoolean()
 
     override fun getBytes(index: Int): ByteArray? {
-        val isNull = PQgetisnull(result, tup_num = 0, field_num = index) == 1
+        val isNull = PQgetisnull(result, tup_num = currentRow, field_num = index) == 1
         return if (isNull) {
             null
         } else {
-            val bytes = PQgetvalue(result, tup_num = 0, field_num = index)!!
-            val length = PQgetlength(result, tup_num = 0, field_num = index)
+            val bytes = PQgetvalue(result, tup_num = currentRow, field_num = index)!!
+            val length = PQgetlength(result, tup_num = currentRow, field_num = index)
             bytes.fromHex(length)
         }
     }
@@ -381,11 +372,11 @@ public sealed class PostgresCursor(
     override fun getLong(index: Int): Long? = getString(index)?.toLong()
 
     override fun getString(index: Int): String? {
-        val isNull = PQgetisnull(result, tup_num = 0, field_num = index) == 1
+        val isNull = PQgetisnull(result, tup_num = currentRow, field_num = index) == 1
         return if (isNull) {
             null
         } else {
-            val value = PQgetvalue(result, tup_num = 0, field_num = index)
+            val value = PQgetvalue(result, tup_num = currentRow, field_num = index)
             value!!.toKString()
         }
     }
