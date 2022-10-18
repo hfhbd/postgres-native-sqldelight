@@ -68,7 +68,10 @@ class PostgresNativeDriverTest {
     fun userTest() {
         val queries = NativePostgres(driver).usersQueries
         NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
-        queries.insert("test@test", "test", "bio", "")
+        val id = queries.insertAndGet("test@test", "test", "bio", "").executeAsOne()
+        assertEquals(1, id)
+        val id2 = queries.insertAndGet("test2@test", "test2", "bio2", "").executeAsOne()
+        assertEquals(2, id2)
         val testUser = queries.selectByUsername("test").executeAsOne()
         assertEquals(
             SelectByUsername(

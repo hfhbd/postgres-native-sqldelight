@@ -66,7 +66,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                     paramValues = preparedStatement?.values(this),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
-                    resultFormat = BINARY_RESULT_FORMAT
+                    resultFormat = TEXT_RESULT_FORMAT
                 )
             }
         } else {
@@ -78,7 +78,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                     paramValues = preparedStatement?.values(this),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
-                    resultFormat = BINARY_RESULT_FORMAT,
+                    resultFormat = TEXT_RESULT_FORMAT,
                     paramTypes = preparedStatement?.types?.refTo(0)
                 )
             }
@@ -87,11 +87,12 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         return QueryResult.Value(value = result.rows)
     }
 
-    private val CPointer<PGresult>.rows: Long get() {
-        val rows = PQcmdTuples(this)!!.toKString()
-        clear()
-        return rows.toLongOrNull() ?: 0
-    }
+    private val CPointer<PGresult>.rows: Long
+        get() {
+            val rows = PQcmdTuples(this)!!.toKString()
+            clear()
+            return rows.toLongOrNull() ?: 0
+        }
 
     private fun preparedStatementExists(identifier: Int): Boolean {
         val result =
@@ -104,34 +105,33 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         return result.value != null
     }
 
-    private fun Int.escapeNegative(): String = if(this < 0) "_${toString().substring(1)}" else toString()
+    private fun Int.escapeNegative(): String = if (this < 0) "_${toString().substring(1)}" else toString()
 
-    override fun <R> executeQuery(
+    private fun preparedStatement(
+        parameters: Int,
+        binders: (SqlPreparedStatement.() -> Unit)?
+    ): PostgresPreparedStatement? = if (parameters != 0) {
+        PostgresPreparedStatement(parameters).apply {
+            if (binders != null) {
+                binders()
+            }
+        }
+    } else null
+
+    public fun <R> executeQueryWithNativeCursor(
         identifier: Int?,
         sql: String,
         mapper: (SqlCursor) -> R,
         parameters: Int,
+        fetchSize: Int = 1,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): QueryResult.Value<R> {
         val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.escapeNegative()}"
         val cursor = "DECLARE $cursorName CURSOR FOR"
-        val preparedStatement = if (parameters != 0) {
-            PostgresPreparedStatement(parameters).apply {
-                if (binders != null) {
-                    binders()
-                }
-            }
-        } else null
+
+        val preparedStatement = preparedStatement(parameters, binders)
         val result = if (identifier != null) {
-            if (!preparedStatementExists(identifier)) {
-                PQprepare(
-                    conn,
-                    stmtName = identifier.toString(),
-                    query = "$cursor $sql",
-                    nParams = parameters,
-                    paramTypes = preparedStatement?.types?.refTo(0)
-                ).check(conn).clear()
-            }
+            checkPreparedStatement(identifier, "$cursor $sql", parameters, preparedStatement)
             conn.exec("BEGIN")
             memScoped {
                 PQexecPrepared(
@@ -141,7 +141,7 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                     paramValues = preparedStatement?.values(this),
                     paramLengths = preparedStatement?.lengths?.refTo(0),
                     paramFormats = preparedStatement?.formats?.refTo(0),
-                    resultFormat = BINARY_RESULT_FORMAT
+                    resultFormat = TEXT_RESULT_FORMAT
                 )
             }
         } else {
@@ -155,12 +155,69 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
                     paramLengths = preparedStatement?.lengths?.refTo(0),
                     paramFormats = preparedStatement?.formats?.refTo(0),
                     paramTypes = preparedStatement?.types?.refTo(0),
-                    resultFormat = BINARY_RESULT_FORMAT
+                    resultFormat = TEXT_RESULT_FORMAT
                 )
             }
         }.check(conn)
 
-        val value = PostgresCursor(result, cursorName, conn).use(mapper)
+        val value = PostgresCursor.RealCursor(result, cursorName, conn, fetchSize).use(mapper)
+        return QueryResult.Value(value = value)
+    }
+
+    private fun checkPreparedStatement(
+        identifier: Int,
+        sql: String,
+        parameters: Int,
+        preparedStatement: PostgresPreparedStatement?
+    ) {
+        if (!preparedStatementExists(identifier)) {
+            PQprepare(
+                conn,
+                stmtName = identifier.toString(),
+                query = sql,
+                nParams = parameters,
+                paramTypes = preparedStatement?.types?.refTo(0)
+            ).check(conn).clear()
+        }
+    }
+
+    override fun <R> executeQuery(
+        identifier: Int?,
+        sql: String,
+        mapper: (SqlCursor) -> R,
+        parameters: Int,
+        binders: (SqlPreparedStatement.() -> Unit)?
+    ): QueryResult.Value<R> {
+        val preparedStatement = preparedStatement(parameters, binders)
+        val result = if (identifier != null) {
+            checkPreparedStatement(identifier, sql, parameters, preparedStatement)
+            memScoped {
+                PQexecPrepared(
+                    conn,
+                    stmtName = identifier.toString(),
+                    nParams = parameters,
+                    paramValues = preparedStatement?.values(this),
+                    paramLengths = preparedStatement?.lengths?.refTo(0),
+                    paramFormats = preparedStatement?.formats?.refTo(0),
+                    resultFormat = TEXT_RESULT_FORMAT
+                )
+            }
+        } else {
+            memScoped {
+                PQexecParams(
+                    conn,
+                    command = sql,
+                    nParams = parameters,
+                    paramValues = preparedStatement?.values(this),
+                    paramLengths = preparedStatement?.lengths?.refTo(0),
+                    paramFormats = preparedStatement?.formats?.refTo(0),
+                    paramTypes = preparedStatement?.types?.refTo(0),
+                    resultFormat = TEXT_RESULT_FORMAT
+                )
+            }
+        }.check(conn)
+
+        val value = PostgresCursor.NoCursor(result).use(mapper)
         return QueryResult.Value(value = value)
     }
 
@@ -232,29 +289,73 @@ private fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresult
     return this!!
 }
 
-/**
- * Must be inside a transaction!
- */
-public class PostgresCursor(
-    private var result: CPointer<PGresult>,
-    private val name: String,
-    private val conn: CPointer<PGconn>
+public sealed class PostgresCursor(
+    internal var result: CPointer<PGresult>
 ) : SqlCursor, Closeable {
-    override fun close() {
-        result.clear()
-        conn.exec("CLOSE $name")
-        conn.exec("END")
+    internal abstract val currentRowIndex: Int
+
+    /**
+     * Must be inside a transaction!
+     */
+    internal class RealCursor(
+        result: CPointer<PGresult>,
+        private val name: String,
+        private val conn: CPointer<PGconn>,
+        private val fetchSize: Int
+    ) : PostgresCursor(result) {
+        override fun close() {
+            result.clear()
+            conn.exec("CLOSE $name")
+            conn.exec("END")
+        }
+
+        override var currentRowIndex = -1
+        private var maxRowIndex = -1
+
+        override fun next(): Boolean {
+            if (currentRowIndex == maxRowIndex) {
+                currentRowIndex = -1
+            }
+            if (currentRowIndex == -1) {
+                result = PQexec(conn, "FETCH $fetchSize IN $name").check(conn)
+                maxRowIndex = PQntuples(result) - 1
+            }
+            return if (currentRowIndex < maxRowIndex) {
+                currentRowIndex += 1
+                true
+            } else false
+        }
+    }
+
+    internal class NoCursor(
+        result: CPointer<PGresult>
+    ) : PostgresCursor(result) {
+        override fun close() {
+            result.clear()
+        }
+
+        private val maxRowIndex = PQntuples(result) - 1
+        override var currentRowIndex = -1
+
+        override fun next(): Boolean {
+            return if (currentRowIndex < maxRowIndex) {
+                currentRowIndex += 1
+                true
+            } else {
+                false
+            }
+        }
     }
 
     override fun getBoolean(index: Int): Boolean? = getString(index)?.toBoolean()
 
     override fun getBytes(index: Int): ByteArray? {
-        val isNull = PQgetisnull(result, tup_num = 0, field_num = index) == 1
+        val isNull = PQgetisnull(result, tup_num = currentRowIndex, field_num = index) == 1
         return if (isNull) {
             null
         } else {
-            val bytes = PQgetvalue(result, tup_num = 0, field_num = index)!!
-            val length = PQgetlength(result, tup_num = 0, field_num = index)
+            val bytes = PQgetvalue(result, tup_num = currentRowIndex, field_num = index)!!
+            val length = PQgetlength(result, tup_num = currentRowIndex, field_num = index)
             bytes.fromHex(length)
         }
     }
@@ -284,11 +385,11 @@ public class PostgresCursor(
     override fun getLong(index: Int): Long? = getString(index)?.toLong()
 
     override fun getString(index: Int): String? {
-        val isNull = PQgetisnull(result, tup_num = 0, field_num = index) == 1
+        val isNull = PQgetisnull(result, tup_num = currentRowIndex, field_num = index) == 1
         return if (isNull) {
             null
         } else {
-            val value = PQgetvalue(result, tup_num = 0, field_num = index)
+            val value = PQgetvalue(result, tup_num = currentRowIndex, field_num = index)
             value!!.toKString()
         }
     }
@@ -302,11 +403,6 @@ public class PostgresCursor(
 
     public fun getInterval(index: Int): Duration? = getString(index)?.let { Duration.parseIsoString(it) }
     public fun getUUID(index: Int): UUID? = getString(index)?.toUUID()
-
-    override fun next(): Boolean {
-        result = PQexec(conn, "FETCH NEXT IN $name").check(conn)
-        return PQcmdTuples(result)!!.toKString().toInt() == 1
-    }
 }
 
 public class PostgresPreparedStatement(private val parameters: Int) : SqlPreparedStatement {
