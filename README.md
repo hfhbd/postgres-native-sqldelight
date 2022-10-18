@@ -50,10 +50,10 @@ For compilers to find libpq you may need to set:
 
 ### Testing
 
-At the moment, there is a Kotlin commonizer problem with the macOS arm target.
+If you install libpq with homebrew, it will install the platform-specific artifact.
 
-| Host        | Supported test targets            |
-|-------------|-----------------------------------|
-| linux x64   | linux x64                         |
-| macOS x64   | macOS x64, macOS arm64, linux x64 |
-| macOS arm64 | macOS arm64                       |
+| Host        | Supported test targets |
+|-------------|------------------------|
+| linux x64   | linux x64              |
+| macOS x64   | macOS x64, linux x64   |
+| macOS arm64 | macOS arm64            |
