@@ -53,13 +53,13 @@ public class PostgresNativeDriver(
             }
 
             is ListenerSupport.Remote -> {
-                val queryKeysEscaped = queryKeys.map {
+                val queryKeysRenamed = queryKeys.map {
                     listenerSupport.notificationName(it)
                 }
-                listeners[listener] = listenerSupport.notificationScope.listen(queryKeysEscaped) {
+                listeners[listener] = listenerSupport.notificationScope.listen(queryKeysRenamed) {
                     listener.queryResultsChanged()
                 }
-                for (queryKey in queryKeysEscaped) {
+                for (queryKey in queryKeysRenamed) {
                     execute(null, "LISTEN ${conn.escaped(queryKey)}", parameters = 0)
                 }
             }
