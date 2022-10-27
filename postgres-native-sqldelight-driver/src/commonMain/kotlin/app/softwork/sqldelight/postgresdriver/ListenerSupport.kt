@@ -1,11 +1,10 @@
 package app.softwork.sqldelight.postgresdriver
 
+import io.ktor.network.selector.*
 import kotlinx.cinterop.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import libpq.*
-import platform.posix.*
-import kotlin.coroutines.*
 import kotlin.time.*
 
 public sealed interface ListenerSupport {
@@ -31,25 +30,19 @@ public sealed interface ListenerSupport {
         public val notificationName: (String) -> String = { it }
     ) : ScopedListenerSupport {
         internal fun remoteListener(conn: CPointer<PGconn>): Flow<String> = channelFlow {
-            @OptIn(ExperimentalCoroutinesApi::class)
-            val selectorContext = newSingleThreadContext("WorkerSelectorManager")
-            val job = Job()
-            val coroutineContext = selectorContext + job
+            val selector = SelectorManager()
 
             try {
                 val socket = PQsocket(conn)
                 check(socket >= 0) {
                     "Error while connecting to the PostgreSql socket"
                 }
-                val pollfd: pollfd = memScoped { alloc() }
-                pollfd.fd = socket
-                val timeoutMs = 500
+                val selectable = object: Selectable {
+                    override val descriptor: Int = socket
+                }
 
-                while (true) {
-                    withContext(coroutineContext) {
-                        @OptIn(UnsafeNumber::class)
-                        poll(pollfd.ptr, 1, timeoutMs)
-                    }
+                while (isActive) {
+                    selector.select(selectable, SelectInterest.READ)
                     PQconsumeInput(conn)
                     var notification: PGnotify? = null
                     while (PQnotifies(conn)?.pointed?.also { notification = it } != null) {
@@ -61,8 +54,7 @@ public sealed interface ListenerSupport {
                     }
                 }
             } finally {
-                job.cancel()
-                selectorContext.close()
+                selector.close()
             }
         }.shareIn(notificationScope, SharingStarted.WhileSubscribed(replayExpiration = Duration.ZERO))
     }
