@@ -11,7 +11,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2" apply false
     id("com.alecstrong.grammar.kit.composer") version "0.1.10" apply false
     id("app.cash.sqldelight") version "2.0.0-alpha04" apply false
-    id("app.cash.licensee") version "1.5.0" apply false
+    id("app.cash.licensee") version "1.6.0" apply false
 }
 
 repositories {
