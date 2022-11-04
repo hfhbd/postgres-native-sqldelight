@@ -32,6 +32,8 @@ sqldelight {
 
 Apache 2
 
+This library uses some socket native code from [ktor](https://github.com/ktorio/ktor), licensed under Apache 2. 
+
 ## Contributing
 
 You need libpq installed: https://formulae.brew.sh/formula/libpq#default
