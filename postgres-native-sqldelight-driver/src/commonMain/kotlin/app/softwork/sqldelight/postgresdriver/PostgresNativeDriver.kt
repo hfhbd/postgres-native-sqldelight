@@ -35,10 +35,10 @@ public class PostgresNativeDriver(
 
     private val listeners = mutableMapOf<Query.Listener, Job>()
 
-    private fun CoroutineScope.listen(queryKeysEscaped: List<String>, action: suspend (String) -> Unit) =
+    private fun CoroutineScope.listen(queryKeys: List<String>, action: suspend (String) -> Unit) =
         launch {
             notifications.filter {
-                it in queryKeysEscaped
+                it in queryKeys
             }.collect {
                 action(it)
             }
@@ -367,7 +367,12 @@ private fun CPointer<PGconn>.escaped(value: String): String {
 }
 
 public fun PostgresNativeDriver(
-    host: String, database: String, user: String, password: String, port: Int = 5432, options: String? = null,
+    host: String,
+    database: String,
+    user: String,
+    password: String,
+    port: Int = 5432,
+    options: String? = null,
     listenerSupport: ListenerSupport = ListenerSupport.None
 ): PostgresNativeDriver {
     val conn = PQsetdbLogin(
