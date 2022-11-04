@@ -9,10 +9,6 @@ import kotlin.time.*
 
 public sealed interface ListenerSupport {
 
-    public sealed interface ScopedListenerSupport : ListenerSupport {
-        public val notificationScope: CoroutineScope
-    }
-
     public companion object {
         public fun Local(notificationScope: CoroutineScope): Local {
             val notifications = MutableSharedFlow<String>()
@@ -30,7 +26,7 @@ public sealed interface ListenerSupport {
 
     public class Remote(
         notificationScope: CoroutineScope,
-        public val notificationName: (String) -> String = { it }
+        internal val notificationName: (String) -> String = { it }
     ) : ScopedListenerSupport {
         override val notificationScope: CoroutineScope = notificationScope + Job()
 

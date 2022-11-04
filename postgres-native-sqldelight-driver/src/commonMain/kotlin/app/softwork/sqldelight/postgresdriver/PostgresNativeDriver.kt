@@ -295,7 +295,7 @@ public class PostgresNativeDriver(
 
     override fun close() {
         PQfinish(conn)
-        if (listenerSupport is ListenerSupport.ScopedListenerSupport) {
+        if (listenerSupport is ScopedListenerSupport) {
             listenerSupport.notificationScope.cancel()
         }
     }
