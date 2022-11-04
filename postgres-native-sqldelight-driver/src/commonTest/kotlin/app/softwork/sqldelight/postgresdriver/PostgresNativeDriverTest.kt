@@ -216,14 +216,14 @@ class PostgresNativeDriverTest {
     }
 
     @Test
-    fun remoteListenerTest() = runTest {
+    fun remoteListenerTest() = runBlocking {
         val other = PostgresNativeDriver(
             host = "localhost",
             port = 5432,
             user = "postgres",
             database = "postgres",
             password = "password",
-            listenerSupport = ListenerSupport.Remote(backgroundScope)
+            listenerSupport = ListenerSupport.Remote(this)
         )
 
         val driver = PostgresNativeDriver(
@@ -232,7 +232,7 @@ class PostgresNativeDriverTest {
             user = "postgres",
             database = "postgres",
             password = "password",
-            listenerSupport = ListenerSupport.Remote(backgroundScope)
+            listenerSupport = ListenerSupport.Remote(this)
         )
 
         val results = MutableStateFlow(0)
@@ -242,27 +242,21 @@ class PostgresNativeDriverTest {
             }
         }
         driver.addListener(listener, arrayOf("foo", "bar"))
-        withContext(Dispatchers.Default) {
-            val setupSocket = 2.seconds
-            delay(setupSocket)
-        }
+
+        val dbDelay = 2.seconds
+        delay(dbDelay)
         other.notifyListeners(arrayOf("foo"))
 
         other.notifyListeners(arrayOf("foo", "bar"))
         other.notifyListeners(arrayOf("bar"))
-        withContext(Dispatchers.Default) {
-            val waitForRemoteNotifications = 2.seconds
-            delay(waitForRemoteNotifications)
-        }
+
+        delay(dbDelay)
 
         driver.removeListener(listener, arrayOf("foo", "bar"))
         driver.notifyListeners(arrayOf("foo"))
         driver.notifyListeners(arrayOf("bar"))
 
-        withContext(Dispatchers.Default) {
-            val waitForRemoteNotifications = 2.seconds
-            delay(waitForRemoteNotifications)
-        }
+        delay(dbDelay)
         assertEquals(4, results.value)
 
         other.close()

@@ -14,7 +14,6 @@ public class PostgresNativeDriver(
     private var transaction: Transacter.Transaction? = null
 
     private val notifications: Flow<String>
-    private val notificationJob = Job()
 
     init {
         require(PQstatus(conn) == ConnStatusType.CONNECTION_OK) {
@@ -37,7 +36,7 @@ public class PostgresNativeDriver(
     private val listeners = mutableMapOf<Query.Listener, Job>()
 
     private fun CoroutineScope.listen(queryKeysEscaped: List<String>, action: suspend (String) -> Unit) =
-        launch(notificationJob) {
+        launch {
             notifications.filter {
                 it in queryKeysEscaped
             }.collect {
@@ -296,8 +295,8 @@ public class PostgresNativeDriver(
 
     override fun close() {
         PQfinish(conn)
-        runBlocking {
-            notificationJob.cancelAndJoin()
+        if (listenerSupport is ListenerSupport.ScopedListenerSupport) {
+            listenerSupport.notificationScope.cancel()
         }
     }
 

@@ -9,6 +9,7 @@ import kotlinx.uuid.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
+@ExperimentalCoroutinesApi
 class PostgresNativeDriverTest {
     private val driver = PostgresNativeDriver(
         host = "localhost",

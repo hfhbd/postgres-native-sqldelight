@@ -8,6 +8,7 @@ import libpq.*
 import kotlin.time.*
 
 public sealed interface ListenerSupport {
+
     public sealed interface ScopedListenerSupport : ListenerSupport {
         public val notificationScope: CoroutineScope
     }
@@ -20,15 +21,19 @@ public sealed interface ListenerSupport {
     }
 
     public class Local(
-        override val notificationScope: CoroutineScope,
-        public val notifications: Flow<String>,
-        public val notify: suspend (String) -> Unit
-    ) : ScopedListenerSupport
+        notificationScope: CoroutineScope,
+        internal val notifications: Flow<String>,
+        internal val notify: suspend (String) -> Unit
+    ) : ScopedListenerSupport {
+        override val notificationScope: CoroutineScope = notificationScope + Job()
+    }
 
     public class Remote(
-        override val notificationScope: CoroutineScope,
+        notificationScope: CoroutineScope,
         public val notificationName: (String) -> String = { it }
     ) : ScopedListenerSupport {
+        override val notificationScope: CoroutineScope = notificationScope + Job()
+
         internal fun remoteListener(conn: CPointer<PGconn>): Flow<String> = channelFlow {
             val selector = SelectorManager()
 
@@ -37,7 +42,7 @@ public sealed interface ListenerSupport {
                 check(socket >= 0) {
                     "Error while connecting to the PostgreSql socket"
                 }
-                val selectable = object: Selectable {
+                val selectable = object : Selectable {
                     override val descriptor: Int = socket
                 }
 
