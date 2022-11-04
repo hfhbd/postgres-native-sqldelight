@@ -3,16 +3,29 @@ package app.softwork.sqldelight.postgresdriver
 import app.cash.sqldelight.*
 import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import libpq.*
 
-public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDriver {
+public class PostgresNativeDriver(
+    private val conn: CPointer<PGconn>,
+    private val listenerSupport: ListenerSupport
+) : SqlDriver {
     private var transaction: Transacter.Transaction? = null
+
+    private val notifications: Flow<String>
 
     init {
         require(PQstatus(conn) == ConnStatusType.CONNECTION_OK) {
             conn.error()
         }
         setDateOutputs()
+
+        notifications = when (listenerSupport) {
+            is ListenerSupport.Local -> listenerSupport.notifications
+            is ListenerSupport.Remote -> listenerSupport.remoteListener(conn)
+            is ListenerSupport.None -> emptyFlow()
+        }
     }
 
     private fun setDateOutputs() {
@@ -20,16 +33,73 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
         execute(null, "SET datestyle = 'ISO';", 0)
     }
 
-    override fun addListener(listener: Query.Listener, queryKeys: Array<String>) {
+    private val listeners = mutableMapOf<Query.Listener, Job>()
 
+    private fun CoroutineScope.listen(queryKeysEscaped: List<String>, action: suspend (String) -> Unit) =
+        launch {
+            notifications.filter {
+                it in queryKeysEscaped
+            }.collect {
+                action(it)
+            }
+        }
+
+    override fun addListener(listener: Query.Listener, queryKeys: Array<String>) {
+        when (listenerSupport) {
+            ListenerSupport.None -> return
+            is ListenerSupport.Local -> {
+                listeners[listener] = listenerSupport.notificationScope.listen(queryKeys.toList()) {
+                    listener.queryResultsChanged()
+                }
+            }
+
+            is ListenerSupport.Remote -> {
+                val queryKeysRenamed = queryKeys.map {
+                    listenerSupport.notificationName(it)
+                }
+                listeners[listener] = listenerSupport.notificationScope.listen(queryKeysRenamed) {
+                    listener.queryResultsChanged()
+                }
+                for (queryKey in queryKeysRenamed) {
+                    execute(null, "LISTEN ${conn.escaped(queryKey)}", parameters = 0)
+                }
+            }
+        }
     }
 
     override fun notifyListeners(queryKeys: Array<String>) {
+        when (listenerSupport) {
+            is ListenerSupport.Local -> {
+                listenerSupport.notificationScope.launch {
+                    for (queryKey in queryKeys) {
+                        listenerSupport.notify(queryKey)
+                    }
+                }
+            }
 
+            is ListenerSupport.Remote -> {
+                for (queryKey in queryKeys) {
+                    val name = listenerSupport.notificationName(queryKey)
+                    execute(null, "NOTIFY ${conn.escaped(name)}", parameters = 0)
+                }
+            }
+
+            ListenerSupport.None -> return
+        }
     }
 
     override fun removeListener(listener: Query.Listener, queryKeys: Array<String>) {
-
+        val queryListeners = listeners[listener]
+        if (queryListeners != null) {
+            if (listenerSupport is ListenerSupport.Remote) {
+                for (queryKey in queryKeys) {
+                    val name = listenerSupport.notificationName(queryKey)
+                    execute(null, "UNLISTEN ${conn.escaped(name)}", parameters = 0)
+                }
+            }
+            queryListeners.cancel()
+            listeners.remove(listener)
+        }
     }
 
     override fun currentTransaction(): Transacter.Transaction? = transaction
@@ -225,6 +295,9 @@ public class PostgresNativeDriver(private var conn: CPointer<PGconn>) : SqlDrive
 
     override fun close() {
         PQfinish(conn)
+        if (listenerSupport is ScopedListenerSupport) {
+            listenerSupport.notificationScope.cancel()
+        }
     }
 
     override fun newTransaction(): QueryResult.Value<Transacter.Transaction> {
@@ -286,8 +359,16 @@ internal fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresul
     return this!!
 }
 
+private fun CPointer<PGconn>.escaped(value: String): String {
+    val cString = PQescapeIdentifier(this, value, value.length.convert())
+    val escaped = cString!!.toKString()
+    PQfreemem(cString)
+    return escaped
+}
+
 public fun PostgresNativeDriver(
-    host: String, database: String, user: String, password: String, port: Int = 5432, options: String? = null
+    host: String, database: String, user: String, password: String, port: Int = 5432, options: String? = null,
+    listenerSupport: ListenerSupport = ListenerSupport.None
 ): PostgresNativeDriver {
     val conn = PQsetdbLogin(
         pghost = host,
@@ -301,5 +382,5 @@ public fun PostgresNativeDriver(
     require(PQstatus(conn) == ConnStatusType.CONNECTION_OK) {
         conn.error()
     }
-    return PostgresNativeDriver(conn!!)
+    return PostgresNativeDriver(conn!!, listenerSupport = listenerSupport)
 }
