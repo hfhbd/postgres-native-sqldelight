@@ -1,5 +1,7 @@
 rootProject.name = "postgres-native-sqldelight"
 
+includeBuild("build-logic")
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":postgres-native-sqldelight-driver")

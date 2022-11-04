@@ -2,6 +2,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 plugins {
     kotlin("multiplatform")
+    id("licensee")
+    id("publishing")
 }
 
 repositories {
@@ -22,6 +24,7 @@ kotlin {
     macosArm64 { config() }
     macosX64 { config() }
     linuxX64 { config() }
+    // linuxArm64 { config() }
     // mingwX64 { config() }
 
     targets.all {
@@ -30,7 +33,12 @@ kotlin {
         }
     }
 
+    explicitApi()
     sourceSets {
+        all {
+            languageSettings.progressiveMode = true
+        }
+
         commonMain {
             dependencies {
                 api("io.ktor:ktor-network:2.1.3")
