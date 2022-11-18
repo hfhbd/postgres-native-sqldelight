@@ -61,6 +61,8 @@ configurations.all {
     exclude(group = "com.jetbrains.rd")
     exclude(group = "com.github.jetbrains", module = "jetCheck")
     exclude(group = "org.roaringbitmap")
+    exclude(group = "com.jetbrains.intellij.remoteDev")
+    exclude(group = "com.jetbrains.intellij.spellchecker")
 }
 
 tasks {
