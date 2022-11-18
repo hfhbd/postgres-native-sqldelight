@@ -21,7 +21,7 @@ repositories {
     maven(url = "https://maven.pkg.jetbrains.space/public/p/ktor/eap")
 }
 
-val idea = "222.4345.24"
+val idea = "222.4459.20"
 
 grammarKit {
     intellijRelease.set(idea)
@@ -61,6 +61,8 @@ configurations.all {
     exclude(group = "com.jetbrains.rd")
     exclude(group = "com.github.jetbrains", module = "jetCheck")
     exclude(group = "org.roaringbitmap")
+    exclude(group = "com.jetbrains.intellij.remoteDev")
+    exclude(group = "com.jetbrains.intellij.spellchecker")
 }
 
 tasks {
