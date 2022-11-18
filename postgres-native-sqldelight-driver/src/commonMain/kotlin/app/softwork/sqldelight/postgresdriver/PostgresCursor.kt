@@ -9,7 +9,7 @@ import kotlin.time.*
 
 public sealed class PostgresCursor(
     internal var result: CPointer<PGresult>
-) : SqlCursor, Closeable {
+) : SqlCursor {
     internal abstract val currentRowIndex: Int
 
     override fun getBoolean(index: Int): Boolean? = getString(index)?.toBoolean()

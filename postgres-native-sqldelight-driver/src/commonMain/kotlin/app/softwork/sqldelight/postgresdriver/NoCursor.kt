@@ -1,11 +1,12 @@
 package app.softwork.sqldelight.postgresdriver
 
+import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
 import libpq.*
 
 internal class NoCursor(
     result: CPointer<PGresult>
-) : PostgresCursor(result) {
+) : PostgresCursor(result), Closeable {
     override fun close() {
         result.clear()
     }
