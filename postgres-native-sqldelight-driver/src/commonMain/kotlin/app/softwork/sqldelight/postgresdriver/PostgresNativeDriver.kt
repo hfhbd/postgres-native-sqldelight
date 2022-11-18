@@ -176,7 +176,7 @@ public class PostgresNativeDriver(
 
     private fun preparedStatement(
         parameters: Int,
-        binders: (SqlPreparedStatement.() -> Unit)?
+        binders: (PostgresPreparedStatement.() -> Unit)?
     ): PostgresPreparedStatement? = if (parameters != 0) {
         PostgresPreparedStatement(parameters).apply {
             if (binders != null) {
@@ -184,52 +184,6 @@ public class PostgresNativeDriver(
             }
         }
     } else null
-
-    public fun <R> executeQueryWithNativeCursor(
-        identifier: Int?,
-        sql: String,
-        mapper: (SqlCursor) -> R,
-        parameters: Int,
-        fetchSize: Int = 1,
-        binders: (SqlPreparedStatement.() -> Unit)?
-    ): QueryResult.Value<R> {
-        val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.escapeNegative()}"
-        val cursor = "DECLARE $cursorName CURSOR FOR"
-
-        val preparedStatement = preparedStatement(parameters, binders)
-        val result = if (identifier != null) {
-            checkPreparedStatement(identifier, "$cursor $sql", parameters, preparedStatement)
-            conn.exec("BEGIN")
-            memScoped {
-                PQexecPrepared(
-                    conn,
-                    stmtName = identifier.toString(),
-                    nParams = parameters,
-                    paramValues = preparedStatement?.values(this),
-                    paramLengths = preparedStatement?.lengths?.refTo(0),
-                    paramFormats = preparedStatement?.formats?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT
-                )
-            }
-        } else {
-            conn.exec("BEGIN")
-            memScoped {
-                PQexecParams(
-                    conn,
-                    command = "$cursor $sql",
-                    nParams = parameters,
-                    paramValues = preparedStatement?.values(this),
-                    paramLengths = preparedStatement?.lengths?.refTo(0),
-                    paramFormats = preparedStatement?.formats?.refTo(0),
-                    paramTypes = preparedStatement?.types?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT
-                )
-            }
-        }.check(conn)
-
-        val value = RealCursor(result, cursorName, conn, fetchSize).use(mapper)
-        return QueryResult.Value(value = value)
-    }
 
     private fun checkPreparedStatement(
         identifier: Int,
@@ -321,6 +275,8 @@ public class PostgresNativeDriver(
         }
     }
 
+    // Custom functions
+
     public fun copy(stdin: String): Long {
         val status = PQputCopyData(conn, stdin, stdin.encodeToByteArray().size)
         check(status == 1) {
@@ -332,6 +288,76 @@ public class PostgresNativeDriver(
         }
         val result = PQgetResult(conn).check(conn)
         return result.rows
+    }
+
+    public fun <R> executeQueryAsFlow(
+        identifier: Int?,
+        sql: String,
+        mapper: suspend (PostgresCursor) -> R,
+        parameters: Int,
+        fetchSize: Int = 1,
+        binders: (PostgresPreparedStatement.() -> Unit)?
+    ): Flow<R> = flow {
+        val (result, cursorName) = prepareQuery(identifier, sql, parameters, binders)
+        RealCursor(result, cursorName, conn, fetchSize).use {
+            while (it.next()) {
+                emit(mapper(it))
+            }
+        }
+    }
+
+    private fun prepareQuery(
+        identifier: Int?,
+        sql: String,
+        parameters: Int,
+        binders: (PostgresPreparedStatement.() -> Unit)?
+    ): Pair<CPointer<PGresult>, String> {
+        val cursorName = if (identifier == null) "myCursor" else "cursor${identifier.escapeNegative()}"
+        val cursor = "DECLARE $cursorName CURSOR FOR"
+
+        val preparedStatement = preparedStatement(parameters, binders)
+        return if (identifier != null) {
+            checkPreparedStatement(identifier, "$cursor $sql", parameters, preparedStatement)
+            conn.exec("BEGIN")
+            memScoped {
+                PQexecPrepared(
+                    conn,
+                    stmtName = identifier.toString(),
+                    nParams = parameters,
+                    paramValues = preparedStatement?.values(this),
+                    paramLengths = preparedStatement?.lengths?.refTo(0),
+                    paramFormats = preparedStatement?.formats?.refTo(0),
+                    resultFormat = TEXT_RESULT_FORMAT
+                )
+            }
+        } else {
+            conn.exec("BEGIN")
+            memScoped {
+                PQexecParams(
+                    conn,
+                    command = "$cursor $sql",
+                    nParams = parameters,
+                    paramValues = preparedStatement?.values(this),
+                    paramLengths = preparedStatement?.lengths?.refTo(0),
+                    paramFormats = preparedStatement?.formats?.refTo(0),
+                    paramTypes = preparedStatement?.types?.refTo(0),
+                    resultFormat = TEXT_RESULT_FORMAT
+                )
+            }
+        }.check(conn) to cursorName
+    }
+
+    public fun <R> executeQueryWithNativeCursor(
+        identifier: Int?,
+        sql: String,
+        mapper: (PostgresCursor) -> R,
+        parameters: Int,
+        fetchSize: Int = 1,
+        binders: (PostgresPreparedStatement.() -> Unit)?
+    ): QueryResult.Value<R> {
+        val (result, cursorName) = prepareQuery(identifier, sql, parameters, binders)
+        val value = RealCursor(result, cursorName, conn, fetchSize).use(mapper)
+        return QueryResult.Value(value = value)
     }
 }
 
