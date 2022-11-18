@@ -1,5 +1,6 @@
 package app.softwork.sqldelight.postgresdriver
 
+import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
 import libpq.*
 
@@ -11,7 +12,7 @@ internal class RealCursor(
     private val name: String,
     private val conn: CPointer<PGconn>,
     private val fetchSize: Int
-) : PostgresCursor(result) {
+) : PostgresCursor(result), Closeable {
     override fun close() {
         result.clear()
         conn.exec("CLOSE $name")

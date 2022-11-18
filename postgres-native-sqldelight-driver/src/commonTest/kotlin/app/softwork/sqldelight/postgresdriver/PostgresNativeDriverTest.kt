@@ -10,7 +10,7 @@ import kotlin.time.Duration.Companion.seconds
 @ExperimentalCoroutinesApi
 class PostgresNativeDriverTest {
     @Test
-    fun simpleTest() {
+    fun simpleTest() = runTest {
         val driver = PostgresNativeDriver(
             host = "localhost",
             port = 5432,
@@ -122,6 +122,22 @@ class PostgresNativeDriverTest {
                 }).value
             cursorList.size
         }
+
+        val cursorFlow = driver.executeQueryAsFlow(
+            -42,
+            "SELECT * FROM baz",
+            fetchSize = 1,
+            parameters = 0,
+            binders = null,
+            mapper = {
+                Simple(
+                    index = it.getLong(0)!!.toInt(),
+                    name = it.getString(1),
+                    byteArray = it.getBytes(2)
+                )
+            })
+        assertEquals(7, cursorFlow.count())
+        assertEquals(4, cursorFlow.take(4).count())
 
         expect(0) {
             val cursorList = driver.executeQueryWithNativeCursor(
