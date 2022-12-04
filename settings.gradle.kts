@@ -1,3 +1,15 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    includeBuild("build-logic")
+}
+
+plugins {
+    id("MyRepos")
+}
+
 rootProject.name = "postgres-native-sqldelight"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

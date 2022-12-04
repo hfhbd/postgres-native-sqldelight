@@ -3,22 +3,18 @@ import org.jetbrains.grammarkit.tasks.*
 
 plugins {
     kotlin("jvm")
-    `maven-publish`
-    id("com.github.johnrengelman.shadow")
-    id("com.alecstrong.grammar.kit.composer")
+    com.alecstrong.grammar.kit.composer
+    com.github.johnrengelman.shadow
+    org.jetbrains.kotlinx.`binary-compatibility-validator`
+    app.cash.licensee
+    repos
+    publish
+    exclude
 }
 
 java {
     withJavadocJar()
     withSourcesJar()
-}
-
-repositories {
-    mavenCentral()
-    maven(url = "https://www.jetbrains.com/intellij-repository/releases")
-    maven(url = "https://cache-redirector.jetbrains.com/intellij-dependencies")
-    maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/")
-    maven(url = "https://maven.pkg.jetbrains.space/public/p/ktor/eap")
 }
 
 val idea = "222.4459.24"
@@ -55,14 +51,12 @@ kotlin {
     target.compilations.all {
         kotlinOptions.allWarningsAsErrors = true
     }
-}
-
-configurations.all {
-    exclude(group = "com.jetbrains.rd")
-    exclude(group = "com.github.jetbrains", module = "jetCheck")
-    exclude(group = "org.roaringbitmap")
-    exclude(group = "com.jetbrains.intellij.remoteDev")
-    exclude(group = "com.jetbrains.intellij.spellchecker")
+    explicitApi()
+    sourceSets {
+        all {
+            languageSettings.progressiveMode = true
+        }
+    }
 }
 
 tasks {
@@ -130,4 +124,10 @@ publishing {
             project.shadow.component(this)
         }
     }
+}
+
+licensee {
+    allow("Apache-2.0")
+    allow("MIT")
+    allowUrl("https://jdbc.postgresql.org/about/license.html")
 }

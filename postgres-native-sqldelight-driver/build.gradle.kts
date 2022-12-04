@@ -2,13 +2,18 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 plugins {
     kotlin("multiplatform")
-}
-
-repositories {
-    mavenCentral()
+    app.cash.licensee
+    repos
 }
 
 kotlin {
+    explicitApi()
+    sourceSets {
+        all {
+            languageSettings.progressiveMode = true
+        }
+    }
+
     fun KotlinNativeTarget.config() {
         compilations.getByName("main") {
             cinterops {
@@ -47,4 +52,8 @@ kotlin {
             }
         }
     }
+}
+
+licensee {
+    allow("Apache-2.0")
 }
