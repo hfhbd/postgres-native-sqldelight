@@ -166,8 +166,9 @@ public class PostgresNativeDriver(
             executeQuery(null, "SELECT name FROM pg_prepared_statements WHERE name = $1", parameters = 1, binders = {
                 bindString(0, identifier.toString())
             }, mapper = {
-                it.next()
-                it.getString(0)
+                if (it.next()) {
+                    it.getString(0)
+                } else null
             })
         return result.value != null
     }
