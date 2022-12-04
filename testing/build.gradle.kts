@@ -1,10 +1,7 @@
 plugins {
     kotlin("multiplatform")
-    id("app.cash.sqldelight")
-}
-
-repositories {
-    mavenCentral()
+    app.cash.sqldelight
+    repos
 }
 
 kotlin {
