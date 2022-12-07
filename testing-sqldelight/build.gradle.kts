@@ -19,7 +19,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.postgresNativeSqldelightDriver)
-                implementation("app.cash.sqldelight:coroutines-extensions:2.0.0-alpha04")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.0.0-SNAPSHOT")
             }
         }
         commonTest {
@@ -32,10 +32,10 @@ kotlin {
 }
 
 sqldelight {
-    database("NativePostgres") {
+    databases.register("NativePostgres") {
         dialect(projects.postgresNativeSqldelightDialect)
-        packageName = "app.softwork.sqldelight.postgresdriver"
-        deriveSchemaFromMigrations = true
+        packageName.set("app.softwork.sqldelight.postgresdriver")
+        deriveSchemaFromMigrations.set(true)
     }
-    linkSqlite = false
+    linkSqlite.set(false)
 }
