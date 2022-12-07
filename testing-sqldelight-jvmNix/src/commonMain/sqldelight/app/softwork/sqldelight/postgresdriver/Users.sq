@@ -1,0 +1,17 @@
+insertAndGet:
+INSERT INTO users(email, username, bio, image, fooID)
+VALUES (?, ?, ?, ?, ?)
+RETURNING id;
+
+selectByUsername:
+SELECT email, username, bio, image
+FROM users
+WHERE username = :username;
+
+selectByFoo:
+SELECT * FROM users WHERE fooID = :fooID;
+
+updateWhereFoo:
+UPDATE users
+SET email = :newEmail
+WHERE fooID = :fooID;

@@ -262,11 +262,7 @@ class PostgresNativeDriverTest {
         )
 
         val results = MutableStateFlow(0)
-        val listener = object : Query.Listener {
-            override fun queryResultsChanged() {
-                results.update { it + 1 }
-            }
-        }
+        val listener = Query.Listener { results.update { it + 1 } }
         driver.addListener(listener, arrayOf("foo", "bar"))
 
         val dbDelay = 2.seconds
@@ -311,11 +307,7 @@ class PostgresNativeDriverTest {
         )
 
         val results = MutableStateFlow(0)
-        val listener = object : Query.Listener {
-            override fun queryResultsChanged() {
-                results.update { it + 1 }
-            }
-        }
+        val listener = Query.Listener { results.update { it + 1 } }
         driver.addListener(listener, arrayOf("foo", "bar"))
         runCurrent()
         driver.notifyListeners(arrayOf("foo"))

@@ -1,0 +1,8 @@
+create:
+INSERT INTO foo VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+get:
+SELECT * FROM foo;
+
+startCopy:
+COPY foo FROM STDIN (FORMAT CSV);

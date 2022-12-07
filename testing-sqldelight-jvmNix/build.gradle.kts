@@ -2,10 +2,14 @@ import org.jetbrains.kotlin.konan.target.*
 
 plugins {
     kotlin("multiplatform")
+    id("app.cash.sqldelight")
     id("repos")
 }
 
 kotlin {
+    targetHierarchy.default()
+    
+    jvm()
     when (HostManager.host) {
         KonanTarget.LINUX_X64 -> linuxX64()
         KonanTarget.MACOS_ARM64 -> macosArm64()
@@ -14,12 +18,26 @@ kotlin {
     }
 
     sourceSets {
+        commonMain {
+            dependencies {
+                implementation(projects.jvmNixDriver)
+                implementation(libs.sqldelight.coroutines)
+            }
+        }
         commonTest {
             dependencies {
-                implementation(projects.driver)
                 implementation(kotlin("test"))
                 implementation(libs.coroutines.test)
             }
         }
     }
+}
+
+sqldelight {
+    databases.register("NativePostgres") {
+        dialect(projects.sqldelightDialectJvmNix)
+        packageName.set("app.softwork.sqldelight.postgresdriver")
+        deriveSchemaFromMigrations.set(true)
+    }
+    linkSqlite.set(false)
 }

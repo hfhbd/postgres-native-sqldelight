@@ -18,7 +18,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(projects.postgresNativeSqldelightDriver)
+                implementation(projects.driver)
                 implementation(libs.sqldelight.coroutines)
             }
         }
@@ -33,7 +33,7 @@ kotlin {
 
 sqldelight {
     databases.register("NativePostgres") {
-        dialect(projects.postgresNativeSqldelightDialect)
+        dialect(projects.sqldelightDialect)
         packageName.set("app.softwork.sqldelight.postgresdriver")
         deriveSchemaFromMigrations.set(true)
     }

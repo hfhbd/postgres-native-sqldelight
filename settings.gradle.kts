@@ -26,8 +26,12 @@ rootProject.name = "postgres-native-sqldelight"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-include(":postgres-native-sqldelight-driver")
-include(":postgres-native-sqldelight-dialect")
+include(":driver")
+include(":sqldelight-dialect")
+
+include(":sqldelight-dialect-jvmNix")
+include(":jvmNix-driver")
 
 include(":testing")
 include(":testing-sqldelight")
+include(":testing-sqldelight-jvmNix")
