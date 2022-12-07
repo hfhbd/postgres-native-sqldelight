@@ -4,6 +4,7 @@ plugins {
     kotlin("multiplatform")
     app.cash.licensee
     repos
+    publish
 }
 
 kotlin {
