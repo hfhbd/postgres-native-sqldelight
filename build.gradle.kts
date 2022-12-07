@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.gradle-nexus.publish-plugin")
+    io.github.`gradle-nexus`.`publish-plugin`
 }
 
 nexusPublishing {
