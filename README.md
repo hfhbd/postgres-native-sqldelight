@@ -115,8 +115,6 @@ val rows = driver.copy("1,2,3\n4,5,6\n")
 
 Apache 2
 
-This library uses some socket native code from [ktor](https://github.com/ktorio/ktor), licensed under Apache 2.
-
 ## Contributing
 
 You need libpq installed: https://formulae.brew.sh/formula/libpq#default
