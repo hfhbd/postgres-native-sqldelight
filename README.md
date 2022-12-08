@@ -75,7 +75,7 @@ val names: List<Simple> = driver.executeQueryWithNativeCursor(
         
         // Important, don't leak this cursor, eg by returning a Sequence,
         // otherwise the cursor will be closed before fetching rows.
-        // If you need to have an async iterator, use `Flow`.
+        // If you need to use an async iterator, use the `Flow` overload, `executeQueryAsFlow`.
         buildList {
             while (cursor.next()) {
                 add(
