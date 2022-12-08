@@ -67,7 +67,7 @@ driver.execute(identifier = null, sql = "INSERT INTO foo VALUES (42)", parameter
 It also supports a real lazy cursor or a flow:
 
 ```kotlin
-val names: List<String> = driver.executeQueryWithNativeCursor(
+val names: List<Simple> = driver.executeQueryWithNativeCursor(
     identifier = null,
     sql = "SELECT name from foo",
     mapper = { cursor ->
@@ -88,7 +88,7 @@ val names: List<String> = driver.executeQueryWithNativeCursor(
     binders = null
 )
 
-val namesFlow: Flow<String> = driver.executeQueryAsFlow(
+val namesFlow: Flow<Simple> = driver.executeQueryAsFlow(
     identifier = null,
     sql = "SELECT name from foo",
     mapper = { cursor ->
