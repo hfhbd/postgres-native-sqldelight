@@ -10,7 +10,7 @@ You can use the driver with [SQLDelight](https://github.com/cashapp/sqldelight),
 
 You need `libpq` installed and available in your `$PATH`.
 
-This package is uploaded to MavenCentral and supports macOS, linuxX64.
+This package is uploaded to MavenCentral and supports macOS and linuxX64.
 Windows is currently not supported.
 
 ````kotlin
@@ -64,13 +64,18 @@ The identifier is used to reuse prepared statements.
 driver.execute(identifier = null, sql = "INSERT INTO foo VALUES (42)", parameters = 0, binders = null)
 ```
 
-It also supports a real lazy cursor or a flow:
+It also supports a real lazy cursor or a Flow. The `fetchSize` parameter defines how many rows are fetched at once:
 
 ```kotlin
 val names: List<Simple> = driver.executeQueryWithNativeCursor(
     identifier = null,
-    sql = "SELECT name from foo",
+    sql = "SELECT index, name, bytes FROM foo",
     mapper = { cursor ->
+        // You need to call `next` and use the cursor to return your type, here it is a list.
+        
+        // Important, don't leak this cursor, eg by returning a Sequence,
+        // otherwise the cursor will be closed before fetching rows.
+        // If you need to have an async iterator, use `Flow`.
         buildList {
             while (cursor.next()) {
                 add(
@@ -90,7 +95,7 @@ val names: List<Simple> = driver.executeQueryWithNativeCursor(
 
 val namesFlow: Flow<Simple> = driver.executeQueryAsFlow(
     identifier = null,
-    sql = "SELECT name from foo",
+    sql = "SELECT index, name, bytes FROM foo",
     mapper = { cursor ->
         Simple(
             index = cursor.getLong(0)!!.toInt(),
@@ -104,10 +109,10 @@ val namesFlow: Flow<Simple> = driver.executeQueryAsFlow(
 )
 ```
 
-And for bulk imports, use the `copy` method:
+And for bulk imports, use the `copy` method. You need to enable `COPY` first:
 
 ```kotlin
-driver.execute(514394779, """COPY foo FROM STDIN (FORMAT CSV)""", 0)
+driver.execute(514394779, "COPY foo FROM STDIN (FORMAT CSV)", 0)
 val rows = driver.copy("1,2,3\n4,5,6\n")
 ```
 
