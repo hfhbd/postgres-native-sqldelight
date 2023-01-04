@@ -39,7 +39,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api("io.ktor:ktor-network:2.2.1")
+                api("io.ktor:ktor-network:2.2.2")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
                 api("app.cash.sqldelight:runtime:2.0.0-alpha04")
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
