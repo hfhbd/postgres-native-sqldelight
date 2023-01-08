@@ -24,7 +24,7 @@ grammarKit {
 }
 
 // https://youtrack.jetbrains.com/issue/IDEA-301677
-val grammar = configurations.create("grammar") {
+val grammar: Configuration by configurations.creating {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
@@ -44,7 +44,7 @@ dependencies {
     testImplementation("com.jetbrains.intellij.platform:util-ui:$idea")
     testImplementation("com.jetbrains.intellij.platform:project-model-impl:$idea")
     testImplementation("com.jetbrains.intellij.platform:analysis-impl:$idea")
-    testImplementation(kotlin("test-junit"))
+    testImplementation(kotlin("test"))
 }
 
 kotlin {

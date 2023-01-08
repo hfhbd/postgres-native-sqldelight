@@ -8,20 +8,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ 'ubuntu-latest', 'macos-latest' ]
     steps:
       - uses: actions/checkout@v3
       - uses: Homebrew/actions/setup-homebrew@master
@@ -32,7 +22,11 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 11
+      - uses: gradle/gradle-build-action@v2
       - run: ./gradlew assemble
+      - uses: ikalnytskyi/action-setup-postgres@v4
+        with:
+          password: password
       - run: ./gradlew build
       - uses: actions/upload-artifact@v3
         with:
