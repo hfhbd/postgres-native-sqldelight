@@ -1,233 +1,330 @@
 package app.softwork.sqldelight.postgresdriver
 
-import app.cash.sqldelight.coroutines.*
+import app.cash.sqldelight.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
-import kotlinx.datetime.*
-import kotlinx.uuid.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalCoroutinesApi
 class PostgresNativeDriverTest {
-    private val driver = PostgresNativeDriver(
-        host = "localhost",
-        port = 5432,
-        user = "postgres",
-        database = "postgres",
-        password = "password"
-    )
+    @Test
+    fun simpleTest() = runTest {
+        val driver = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password"
+        )
+        assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS baz;", parameters = 0).value)
+        assertEquals(
+            0,
+            driver.execute(null, "CREATE TABLE baz(a INT PRIMARY KEY, foo TEXT, b BYTEA);", parameters = 0).value
+        )
+        repeat(5) {
+            val result = driver.execute(null, "INSERT INTO baz VALUES ($it)", parameters = 0)
+            assertEquals(1, result.value)
+        }
+
+        val result = driver.execute(null, "INSERT INTO baz VALUES ($1, $2, $3), ($4, $5, $6)", parameters = 6) {
+            bindLong(0, 5)
+            bindString(1, "bar 0")
+            bindBytes(2, byteArrayOf(1.toByte(), 2.toByte()))
+
+            bindLong(3, 6)
+            bindString(4, "bar 1")
+            bindBytes(5, byteArrayOf(16.toByte(), 12.toByte()))
+        }.value
+        assertEquals(2, result)
+        val notPrepared = driver.executeQuery(null, "SELECT * FROM baz LIMIT 1;", parameters = 0, mapper = {
+            assertTrue(it.next())
+            Simple(
+                index = it.getLong(0)!!.toInt(),
+                name = it.getString(1),
+                byteArray = it.getBytes(2)
+            )
+        })
+        assertEquals(Simple(0, null, null), notPrepared.value)
+        val preparedStatement = driver.executeQuery(
+            42,
+            sql = "SELECT * FROM baz;",
+            parameters = 0, binders = null,
+            mapper = {
+                buildList {
+                    while (it.next()) {
+                        add(
+                            Simple(
+                                index = it.getLong(0)!!.toInt(),
+                                name = it.getString(1),
+                                byteArray = it.getBytes(2)
+                            )
+                        )
+                    }
+                }
+            }
+        ).value
+
+        assertEquals(7, preparedStatement.size)
+        assertEquals(
+            List(5) {
+                Simple(it, null, null)
+            } + listOf(
+                Simple(5, "bar 0", byteArrayOf(1.toByte(), 2.toByte())),
+                Simple(6, "bar 1", byteArrayOf(16.toByte(), 12.toByte())),
+            ),
+            preparedStatement
+        )
+
+        expect(7) {
+            val cursorList = driver.executeQueryWithNativeCursor(
+                -99,
+                "SELECT * FROM baz",
+                fetchSize = 4,
+                parameters = 0,
+                binders = null,
+                mapper = {
+                    buildList {
+                        while (it.next()) {
+                            add(
+                                Simple(
+                                    index = it.getLong(0)!!.toInt(),
+                                    name = it.getString(1),
+                                    byteArray = it.getBytes(2)
+                                )
+                            )
+                        }
+                    }
+                }).value
+            cursorList.size
+        }
+
+        expect(7) {
+            val cursorList = driver.executeQueryWithNativeCursor(
+                -5,
+                "SELECT * FROM baz",
+                fetchSize = 1,
+                parameters = 0,
+                binders = null,
+                mapper = {
+                    buildList {
+                        while (it.next()) {
+                            add(
+                                Simple(
+                                    index = it.getLong(0)!!.toInt(),
+                                    name = it.getString(1),
+                                    byteArray = it.getBytes(2)
+                                )
+                            )
+                        }
+                    }
+                }).value
+            cursorList.size
+        }
+
+        val cursorFlow = driver.executeQueryAsFlow(
+            -42,
+            "SELECT * FROM baz",
+            fetchSize = 1,
+            parameters = 0,
+            binders = null,
+            mapper = {
+                Simple(
+                    index = it.getLong(0)!!.toInt(),
+                    name = it.getString(1),
+                    byteArray = it.getBytes(2)
+                )
+            })
+        assertEquals(7, cursorFlow.count())
+        assertEquals(4, cursorFlow.take(4).count())
+
+        expect(0) {
+            val cursorList = driver.executeQueryWithNativeCursor(
+                -100,
+                "SELECT * FROM baz WHERE a = -1",
+                fetchSize = 1,
+                parameters = 0,
+                binders = null,
+                mapper = {
+                    buildList {
+                        while (it.next()) {
+                            add(
+                                Simple(
+                                    index = it.getLong(0)!!.toInt(),
+                                    name = it.getString(1),
+                                    byteArray = it.getBytes(2)
+                                )
+                            )
+                        }
+                    }
+                }).value
+            cursorList.size
+        }
+    }
+
+    private data class Simple(val index: Int, val name: String?, val byteArray: ByteArray?) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+
+            other as Simple
+
+            if (index != other.index) return false
+            if (name != other.name) return false
+            if (byteArray != null) {
+                if (other.byteArray == null) return false
+                if (!byteArray.contentEquals(other.byteArray)) return false
+            } else if (other.byteArray != null) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = index.hashCode()
+            result = 31 * result + (name?.hashCode() ?: 0)
+            result = 31 * result + (byteArray?.contentHashCode() ?: 0)
+            return result
+        }
+    }
 
     @Test
-    fun allTypes() {
-        val queries = NativePostgres(driver).fooQueries
-        NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
-        assertEquals(emptyList(), queries.get().executeAsList())
-
-        val foo = Foo(
-            a = 42,
-            b = "answer",
-            date = LocalDate(2020, Month.DECEMBER, 12),
-            time = LocalTime(12, 42, 0, 0),
-            timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
-            instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
-            uuid = UUID.NIL
-        )
-        queries.create(
-            a = foo.a,
-            b = foo.b,
-            date = foo.date,
-            time = foo.time,
-            timestamp = foo.timestamp,
-            instant = foo.instant,
-            interval = foo.interval,
-            uuid = foo.uuid
-        )
-        assertEquals(foo, queries.get().executeAsOne())
+    fun wrongCredentials() {
+        assertFailsWith<IllegalArgumentException> {
+            PostgresNativeDriver(
+                host = "wrongHost",
+                user = "postgres",
+                database = "postgres",
+                password = "password"
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            PostgresNativeDriver(
+                host = "localhost",
+                user = "postgres",
+                database = "postgres",
+                password = "wrongPassword"
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            PostgresNativeDriver(
+                host = "localhost",
+                user = "wrongUser",
+                database = "postgres",
+                password = "password"
+            )
+        }
     }
 
     @Test
     fun copyTest() {
-        val queries = NativePostgres(driver).fooQueries
-        NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
-        queries.startCopy()
-        val result =
-            driver.copy("42,answer,2020-12-12,12:42:00.0000,2014-08-01T12:01:02.0000,1970-01-01T00:00:00.010Z,PT42S,00000000-0000-0000-0000-000000000000")
-        assertEquals(1, result)
-        val foo = Foo(
-            a = 42,
-            b = "answer",
-            date = LocalDate(2020, Month.DECEMBER, 12),
-            time = LocalTime(12, 42, 0, 0),
-            timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
-            instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
-            uuid = UUID.NIL,
+        val driver = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password"
         )
-        assertEquals(foo, queries.get().executeAsOne())
+        assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS copying;", parameters = 0).value)
+        assertEquals(0, driver.execute(null, "CREATE TABLE copying(a int primary key);", parameters = 0).value)
+        driver.execute(-42, "COPY copying FROM STDIN (FORMAT CSV);", 0)
+        val results = driver.copy("1\n2\n")
+        assertEquals(2, results)
     }
 
     @Test
-    fun userTest() {
-        val queries = NativePostgres(driver).usersQueries
-        NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
-        val id = queries.insertAndGet("test@test", "test", "bio", "", null).executeAsOne()
-        assertEquals(1, id)
-        val id2 = queries.insertAndGet("test2@test", "test2", "bio2", "", null).executeAsOne()
-        assertEquals(2, id2)
-        val testUser = queries.selectByUsername("test").executeAsOne()
-        assertEquals(
-            SelectByUsername(
-                "test@test",
-                "test",
-                "bio",
-                ""
-            ),
-            testUser
-        )
-    }
-
-    @Test
-    fun remoteListenerTest() = runTest(dispatchTimeoutMs = 10.seconds.inWholeMilliseconds) {
-        val client = PostgresNativeDriver(
+    fun remoteListenerTest() = runBlocking {
+        val other = PostgresNativeDriver(
             host = "localhost",
             port = 5432,
             user = "postgres",
             database = "postgres",
             password = "password",
-            listenerSupport = ListenerSupport.Remote(backgroundScope) {
-                it + it
+            listenerSupport = ListenerSupport.Remote(this)
+        )
+
+        val driver = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password",
+            listenerSupport = ListenerSupport.Remote(this)
+        )
+
+        val results = MutableStateFlow(0)
+        val listener = object : Query.Listener {
+            override fun queryResultsChanged() {
+                results.update { it + 1 }
+            }
+        }
+        driver.addListener(listener, arrayOf("foo", "bar"))
+
+        val dbDelay = 2.seconds
+        delay(dbDelay)
+        other.notifyListeners(arrayOf("foo"))
+
+        other.notifyListeners(arrayOf("foo", "bar"))
+        other.notifyListeners(arrayOf("bar"))
+
+        delay(dbDelay)
+
+        driver.removeListener(listener, arrayOf("foo", "bar"))
+        driver.notifyListeners(arrayOf("foo"))
+        driver.notifyListeners(arrayOf("bar"))
+
+        delay(dbDelay)
+        assertEquals(4, results.value)
+
+        other.close()
+        driver.close()
+    }
+
+    @Test
+    fun localListenerTest() = runTest {
+        val notifications = MutableSharedFlow<String>()
+        val notificationList = async {
+            notifications.take(4).toList()
+        }
+
+        val driver = PostgresNativeDriver(
+            host = "localhost",
+            port = 5432,
+            user = "postgres",
+            database = "postgres",
+            password = "password",
+            listenerSupport = ListenerSupport.Local(
+                this,
+                notifications,
+            ) {
+                notifications.emit(it)
             }
         )
 
-        val server = PostgresNativeDriver(
-            host = "localhost",
-            port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password",
-            listenerSupport = ListenerSupport.Remote(backgroundScope) {
-                it + it
+        val results = MutableStateFlow(0)
+        val listener = object : Query.Listener {
+            override fun queryResultsChanged() {
+                results.update { it + 1 }
             }
-        )
-
-        val db = NativePostgres(client)
-        NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
-
-        db.fooQueries.create(
-            a = 42,
-            b = "answer",
-            date = LocalDate(2020, Month.DECEMBER, 12),
-            time = LocalTime(12, 42, 0, 0),
-            timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
-            instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
-            uuid = UUID.NIL
-        )
-        val userQueries = db.usersQueries
-        val id = userQueries.insertAndGet("foo", "foo", "foo", "", 42).executeAsOne()
-
-        val users = async {
-            db.usersQueries.selectByFoo(42)
-                .asFlow().mapToOne(coroutineContext)
-                .take(2).toList()
         }
-        withContext(Dispatchers.Default) {
-            val waitForRemoteNotifications = 2.seconds
-            delay(waitForRemoteNotifications)
-        }
+        driver.addListener(listener, arrayOf("foo", "bar"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("foo"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("foo", "bar"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("bar"))
         runCurrent()
 
-        NativePostgres(server).usersQueries.updateWhereFoo("foo2", 42)
-        withContext(Dispatchers.Default) {
-            val waitForRemoteNotifications = 2.seconds
-            delay(waitForRemoteNotifications)
-        }
+        driver.removeListener(listener, arrayOf("foo", "bar"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("foo"))
+        runCurrent()
+        driver.notifyListeners(arrayOf("bar"))
         runCurrent()
 
-        assertEquals(
-            listOf(
-                Users(
-                    id,
-                    "foo",
-                    "foo",
-                    "foo",
-                    "",
-                    42
-                ), Users(
-                    id,
-                    "foo2",
-                    "foo",
-                    "foo",
-                    "",
-                    42
-                )
-            ), users.await()
-        )
+        assertEquals(4, results.value)
+        assertEquals(listOf("foo", "foo", "bar", "bar"), notificationList.await())
 
-        client.close()
-        server.close()
-    }
-
-    @Test
-    fun localListenerTest() = runTest(dispatchTimeoutMs = 10.seconds.inWholeMilliseconds) {
-        val client = PostgresNativeDriver(
-            host = "localhost",
-            port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password",
-            listenerSupport = ListenerSupport.Local(backgroundScope)
-        )
-
-        val db = NativePostgres(client)
-        NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
-
-        db.fooQueries.create(
-            a = 42,
-            b = "answer",
-            date = LocalDate(2020, Month.DECEMBER, 12),
-            time = LocalTime(12, 42, 0, 0),
-            timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
-            instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
-            uuid = UUID.NIL
-        )
-        val userQueries = db.usersQueries
-        val id = userQueries.insertAndGet("foo", "foo", "foo", "", 42).executeAsOne()
-
-        val users = async {
-            db.usersQueries.selectByFoo(42)
-                .asFlow().mapToOne(coroutineContext)
-                .take(2).toList()
-        }
-        runCurrent()
-
-        userQueries.updateWhereFoo("foo2", 42)
-        runCurrent()
-
-        assertEquals(
-            listOf(
-                Users(
-                    id,
-                    "foo",
-                    "foo",
-                    "foo",
-                    "",
-                    42
-                ), Users(
-                    id,
-                    "foo2",
-                    "foo",
-                    "foo",
-                    "",
-                    42
-                )
-            ), users.await()
-        )
-
-        client.close()
+        driver.close()
     }
 }

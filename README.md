@@ -148,3 +148,8 @@ If you install libpq with homebrew, it will install the platform-specific artifa
 | macOS arm64 | macOS arm64            |
 
 To test other platforms, eg. linux x64 on macOS, you need to install the platform-specific libpq of linux x64 too.
+
+To start the postgres instance, you can use docker:
+```
+docker run -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
+```
