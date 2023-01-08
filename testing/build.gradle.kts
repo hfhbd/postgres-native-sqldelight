@@ -6,11 +6,11 @@ plugins {
 
 kotlin {
 
-    macosArm64()
-    macosX64()
-
-    linuxX64()
-    // mingwX64()
+    when(org.jetbrains.kotlin.konan.target.HostManager.host) {
+        KonanTarget.LINUX_X64 -> linuxX64()
+        KonanTarget.MACOS_ARM64 -> macosArm64()
+        KonanTarget.MACOS_X64 -> macosX64()
+    }
 
     sourceSets {
         commonMain {
