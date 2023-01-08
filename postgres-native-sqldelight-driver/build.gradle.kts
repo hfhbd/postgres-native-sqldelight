@@ -32,7 +32,7 @@ kotlin {
 
     targets.all {
         compilations.all {
-         //   kotlinOptions.allWarningsAsErrors = true
+            kotlinOptions.allWarningsAsErrors = true
         }
     }
 
