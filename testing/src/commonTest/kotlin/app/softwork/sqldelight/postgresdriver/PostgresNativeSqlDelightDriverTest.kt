@@ -8,7 +8,7 @@ import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalCoroutinesApi
-class PostgresNativeDriverTest {
+class PostgresNativeSqlDelightDriverTest {
     @Test
     fun simpleTest() = runTest {
         val driver = PostgresNativeDriver(
