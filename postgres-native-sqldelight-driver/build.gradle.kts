@@ -30,12 +30,6 @@ kotlin {
     linuxX64 { config() }
     // mingwX64 { config() }
 
-    targets.all {
-        compilations.all {
-            kotlinOptions.allWarningsAsErrors = true
-        }
-    }
-
     sourceSets {
         commonMain {
             dependencies {
