@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.konan.target.*
+
 plugins {
     kotlin("multiplatform")
     app.cash.sqldelight
@@ -6,7 +8,7 @@ plugins {
 
 kotlin {
 
-    when(org.jetbrains.kotlin.konan.target.HostManager.host) {
+    when (HostManager.host) {
         KonanTarget.LINUX_X64 -> linuxX64()
         KonanTarget.MACOS_ARM64 -> macosArm64()
         KonanTarget.MACOS_X64 -> macosX64()
