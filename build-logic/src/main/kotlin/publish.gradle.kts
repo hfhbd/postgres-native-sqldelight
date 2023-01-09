@@ -49,13 +49,9 @@ publishing {
     }
 }
 
-(System.getProperty("signing.privateKey") ?: System.getenv("SIGNING_PRIVATE_KEY"))?.let {
-    String(Base64.getDecoder().decode(it)).trim()
-}?.let { key ->
-    println("found key, config signing")
-    signing {
-        val signingPassword = System.getProperty("signing.password") ?: System.getenv("SIGNING_PASSWORD")
-        useInMemoryPgpKeys(key, signingPassword)
-        sign(publishing.publications)
-    }
+signing {
+    val signingKey: String? by project
+    val signingPassword: String? by project
+    useInMemoryPgpKeys(signingKey?.let { String(Base64.getDecoder().decode(it)).trim() }, signingPassword)
+    sign(publishing.publications)
 }
