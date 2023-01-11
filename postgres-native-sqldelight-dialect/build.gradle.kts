@@ -48,6 +48,8 @@ dependencies {
 }
 
 kotlin {
+    jvmToolchain(17)
+
     target.compilations.all {
         kotlinOptions.allWarningsAsErrors = true
     }
@@ -69,7 +71,7 @@ tasks {
 }
 
 tasks.shadowJar {
-    classifier = ""
+    archiveClassifier.set("")
     include("*.jar")
     include("app/cash/sqldelight/**")
     include("app/softwork/sqldelight/postgresdialect/**")

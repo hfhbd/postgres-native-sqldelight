@@ -15,10 +15,6 @@ jobs:
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
       - uses: gradle/wrapper-validation-action@v1
-      - uses: actions/setup-java@v3
-        with:
-          distribution: 'adopt'
-          java-version: 11
       - run: brew install libpq
       - name: Build with Gradle
         run: ./gradlew assemble
