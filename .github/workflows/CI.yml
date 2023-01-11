@@ -18,6 +18,10 @@ jobs:
         id: set-up-homebrew
       - uses: gradle/wrapper-validation-action@v1
       - run: brew install libpq
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: 11
       - uses: gradle/gradle-build-action@v2
       - run: ./gradlew assemble
       - uses: ikalnytskyi/action-setup-postgres@v4

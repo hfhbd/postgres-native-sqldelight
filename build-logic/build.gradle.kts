@@ -12,12 +12,6 @@ dependencies {
     implementation("app.cash.licensee:licensee-gradle-plugin:1.6.0")
 }
 
-kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
-}
-
 gradlePlugin {
     plugins {
         register("MyRepos") {
