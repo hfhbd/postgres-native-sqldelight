@@ -23,18 +23,11 @@ grammarKit {
     intellijRelease.set(idea)
 }
 
-// https://youtrack.jetbrains.com/issue/IDEA-301677
-val grammar: Configuration by configurations.creating {
-    isCanBeResolved = true
-    isCanBeConsumed = false
-}
-
 dependencies {
     api("app.cash.sqldelight:postgresql-dialect:2.0.0-alpha04")
 
     compileOnly("app.cash.sqldelight:dialect-api:2.0.0-alpha04")
 
-    grammar("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     compileOnly("com.jetbrains.intellij.platform:core-impl:$idea")
     compileOnly("com.jetbrains.intellij.platform:util-ui:$idea")
     compileOnly("com.jetbrains.intellij.platform:project-model-impl:$idea")
@@ -58,15 +51,6 @@ kotlin {
         all {
             languageSettings.progressiveMode = true
         }
-    }
-}
-
-tasks {
-    val generateapp_softwork_sqldelight_postgresdialect_PostgreSqlNativeParser by getting(GenerateParserTask::class) {
-        classpath.from(grammar)
-    }
-    generateParser {
-        classpath.from(grammar)
     }
 }
 
