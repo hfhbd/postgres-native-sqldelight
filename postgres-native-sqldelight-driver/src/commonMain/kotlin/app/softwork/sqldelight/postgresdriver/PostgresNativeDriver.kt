@@ -348,6 +348,10 @@ public class PostgresNativeDriver(
         }.check(conn) to cursorName
     }
 
+    @Deprecated(
+        "Use executeQueryAsFlow instead or enter your use-case in https://github.com/hfhbd/postgres-native-sqldelight/issues/121",
+        replaceWith = ReplaceWith("executeQueryAsFlow(identifier, sql, mapper, parameters, fetchSize, binders)")
+    )
     public fun <R> executeQueryWithNativeCursor(
         identifier: Int?,
         sql: String,
