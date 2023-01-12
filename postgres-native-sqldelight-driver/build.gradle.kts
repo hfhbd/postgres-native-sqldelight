@@ -10,15 +10,15 @@ plugins {
 kotlin {
     explicitApi()
     sourceSets {
-        all {
+        configureEach {
             languageSettings.progressiveMode = true
         }
     }
 
     fun KotlinNativeTarget.config() {
-        compilations.getByName("main") {
+        compilations.named("main") {
             cinterops {
-                val libpq by creating {
+                register("libpq") {
                     defFile(project.file("src/nativeInterop/cinterop/libpq.def"))
                 }
             }

@@ -43,12 +43,12 @@ dependencies {
 kotlin {
     jvmToolchain(11)
 
-    target.compilations.all {
+    target.compilations.configureEach {
         kotlinOptions.allWarningsAsErrors = true
     }
     explicitApi()
     sourceSets {
-        all {
+        configureEach {
             languageSettings.progressiveMode = true
         }
     }
@@ -62,7 +62,7 @@ tasks.shadowJar {
     include("META-INF/services/*")
 }
 
-tasks.jar.configure {
+tasks.jar {
     // Prevents shadowJar (with classifier = '') and this task from writing to the same path.
     enabled = false
 }
@@ -72,10 +72,10 @@ configurations {
         it.outgoing.artifacts.removeIf { it.buildDependencies.getDependencies(null).contains(tasks.jar.get()) }
         it.outgoing.artifact(tasks.shadowJar)
     }
-    apiElements.configure {
+    apiElements {
         conf(this)
     }
-    runtimeElements.configure { conf(this) }
+    runtimeElements { conf(this) }
 }
 
 artifacts {
@@ -84,14 +84,14 @@ artifacts {
 }
 
 // Disable Gradle module.json as it lists wrong dependencies
-tasks.withType<GenerateModuleMetadata> {
+tasks.withType<GenerateModuleMetadata>().configureEach {
     enabled = false
 }
 
 // Remove dependencies from POM: uber jar has no dependencies
 publishing {
     publications {
-        withType<MavenPublication> {
+        withType<MavenPublication>().configureEach {
             if (name == "pluginMaven") {
                 pom.withXml {
                     val pomNode = asNode()
@@ -106,7 +106,7 @@ publishing {
                 classifier = "sources"
             }
         }
-        create("shadow", MavenPublication::class.java) {
+        register<MavenPublication>("shadow") {
             project.shadow.component(this)
         }
     }
