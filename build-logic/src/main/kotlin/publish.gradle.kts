@@ -18,7 +18,7 @@ publishing {
             credentials(PasswordCredentials::class)
         }
     }
-    publications.all {
+    publications.configureEach {
         this as MavenPublication
         artifact(emptyJar) {
             classifier = "javadoc"
