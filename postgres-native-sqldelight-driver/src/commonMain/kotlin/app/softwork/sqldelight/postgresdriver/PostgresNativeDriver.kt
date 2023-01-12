@@ -163,9 +163,7 @@ public class PostgresNativeDriver(
 
     private fun preparedStatementExists(identifier: Int): Boolean {
         val result =
-            executeQuery(null, "SELECT name FROM pg_prepared_statements WHERE name = $1", parameters = 1, binders = {
-                bindString(0, identifier.toString())
-            }, mapper = {
+            executeQuery(null, "SELECT name FROM pg_prepared_statements WHERE name = '$identifier'", parameters = 0, binders = null, mapper = {
                 if (it.next()) {
                     it.getString(0)
                 } else null
