@@ -32,10 +32,10 @@ kotlin {
 }
 
 sqldelight {
-    database("NativePostgres") {
+    databases.register("NativePostgres") {
         dialect(projects.postgresNativeSqldelightDialect)
-        packageName = "app.softwork.sqldelight.postgresdriver"
-        deriveSchemaFromMigrations = true
+        packageName.set("app.softwork.sqldelight.postgresdriver")
+        deriveSchemaFromMigrations.set(true)
     }
-    linkSqlite = false
+    linkSqlite.set(false)
 }
