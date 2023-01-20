@@ -14,7 +14,6 @@ class MyRepos : Plugin<Settings> {
 }
 
 fun RepositoryHandler.repos() {
-    maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
     mavenCentral()
 
     maven(url = "https://www.jetbrains.com/intellij-repository/releases")
