@@ -13,6 +13,8 @@ You need `libpq` installed and available in your `$PATH`.
 This package is uploaded to MavenCentral and supports macOS and linuxX64.
 Windows is currently not supported.
 
+Supported SQLDelight version: 2.0.0-alpha05.
+
 ````kotlin
 repositories {
     mavenCentral()
@@ -22,11 +24,12 @@ dependencies {
     implementation("app.softwork:postgres-native-sqldelight-driver:LATEST")
 }
 
+// optional SQLDelight setup: requires 2.0.0-alpha05
 sqldelight {
-    database("NativePostgres") {
+    databases.register("NativePostgres") {
         dialect("app.softwork:postgres-native-sqldelight-dialect:LATEST")
     }
-    linkSqlite = false
+    linkSqlite.set(false)
 }
 ````
 
