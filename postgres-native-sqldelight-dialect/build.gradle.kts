@@ -20,9 +20,9 @@ grammarKit {
 }
 
 dependencies {
-    api("app.cash.sqldelight:postgresql-dialect:2.0.0-SNAPSHOT")
+    api("app.cash.sqldelight:postgresql-dialect:2.0.0-alpha05")
 
-    api("app.cash.sqldelight:dialect-api:2.0.0-SNAPSHOT")
+    api("app.cash.sqldelight:dialect-api:2.0.0-alpha05")
 
     compileOnly("com.jetbrains.intellij.platform:analysis-impl:$idea")
 
