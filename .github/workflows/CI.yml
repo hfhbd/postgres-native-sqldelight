@@ -28,10 +28,3 @@ jobs:
         with:
           password: password
       - run: ./gradlew build
-      - uses: actions/upload-artifact@v3
-        with:
-          path: |
-            postgres-native-sqldelight-dialect/build/reports/tests
-            postgres-native-sqldelight-driver/build/reports/tests
-            testing/build/reports/tests
-        if: failure()
