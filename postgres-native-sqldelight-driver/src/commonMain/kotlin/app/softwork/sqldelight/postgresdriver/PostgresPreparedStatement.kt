@@ -76,8 +76,8 @@ public class PostgresPreparedStatement internal constructor(private val paramete
         bind(index, value?.toString(), timestampTzOid)
     }
 
-    public fun bindInterval(index: Int, value: Duration?) {
-        bind(index, value?.toIsoString(), intervalOid)
+    public fun bindInterval(index: Int, value: DateTimePeriod?) {
+        bind(index, value?.toString(), intervalOid)
     }
 
     public fun bindUUID(index: Int, value: UUID?) {

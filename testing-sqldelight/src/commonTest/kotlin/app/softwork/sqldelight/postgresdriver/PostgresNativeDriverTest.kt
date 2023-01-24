@@ -32,7 +32,7 @@ class PostgresNativeDriverTest {
             time = LocalTime(12, 42, 0, 0),
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
+            interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242000),
             uuid = UUID.NIL
         )
         queries.create(
@@ -54,7 +54,7 @@ class PostgresNativeDriverTest {
         NativePostgres.Schema.migrate(driver, 0, NativePostgres.Schema.version)
         queries.startCopy()
         val result =
-            driver.copy("42,answer,2020-12-12,12:42:00.0000,2014-08-01T12:01:02.0000,1970-01-01T00:00:00.010Z,PT42S,00000000-0000-0000-0000-000000000000")
+            driver.copy("42,answer,2020-12-12,12:42:00.0000,2014-08-01T12:01:02.0000,1970-01-01T00:00:00.010Z,P45Y6M42DT42H42M42.424242S,00000000-0000-0000-0000-000000000000")
         assertEquals(1, result)
         val foo = Foo(
             a = 42,
@@ -63,7 +63,7 @@ class PostgresNativeDriverTest {
             time = LocalTime(12, 42, 0, 0),
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
+            interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242000),
             uuid = UUID.NIL,
         )
         assertEquals(foo, queries.get().executeAsOne())
@@ -123,7 +123,7 @@ class PostgresNativeDriverTest {
             time = LocalTime(12, 42, 0, 0),
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
+            interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242),
             uuid = UUID.NIL
         )
         val userQueries = db.usersQueries
@@ -192,7 +192,7 @@ class PostgresNativeDriverTest {
             time = LocalTime(12, 42, 0, 0),
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
+            interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242),
             uuid = UUID.NIL
         )
         val userQueries = db.usersQueries

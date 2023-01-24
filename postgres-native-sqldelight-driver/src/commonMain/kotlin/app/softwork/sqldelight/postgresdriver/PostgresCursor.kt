@@ -66,6 +66,6 @@ public sealed class PostgresCursor(
         Instant.parse(it.replace(" ", "T"))
     }
 
-    public fun getInterval(index: Int): Duration? = getString(index)?.let { Duration.parseIsoString(it) }
+    public fun getInterval(index: Int): DateTimePeriod? = getString(index)?.let { DateTimePeriod.parse(it) }
     public fun getUUID(index: Int): UUID? = getString(index)?.toUUID()
 }

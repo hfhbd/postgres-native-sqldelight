@@ -25,6 +25,9 @@ public class PostgresNativeDialect : SqlDelightDialect by PostgreSqlDialect() {
         preparedStatementType = ClassName("app.softwork.sqldelight.postgresdriver", "PostgresPreparedStatement")
     )
 
+    override val asyncRuntimeTypes: RuntimeTypes
+        get() = error("Async native driver is not yet supported")
+
     override fun typeResolver(parentResolver: TypeResolver): TypeResolver = PostgresNativeTypeResolver(parentResolver)
 }
 
@@ -80,7 +83,7 @@ private enum class PostgreSqlType(override val javaType: TypeName): DialectType 
     TIME(ClassName("kotlinx.datetime", "LocalTime")),
     TIMESTAMP(ClassName("kotlinx.datetime", "LocalDateTime")),
     TIMESTAMP_TIMEZONE(ClassName("kotlinx.datetime", "Instant")),
-    INTERVAL(ClassName("kotlin.time", "Duration")),
+    INTERVAL(ClassName("kotlinx.datetime", "DateTimePeriod")),
     UUID(ClassName("kotlinx.uuid", "UUID"));
 
     override fun prepareStatementBinder(columnIndex: String, value: CodeBlock): CodeBlock {
