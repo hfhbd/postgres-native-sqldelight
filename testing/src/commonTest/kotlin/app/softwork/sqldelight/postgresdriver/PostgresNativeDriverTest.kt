@@ -8,7 +8,7 @@ import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalCoroutinesApi
-class PostgresNativeSqlDelightDriverTest {
+class PostgresNativeDriverTest {
     @Test
     fun simpleTest() = runTest {
         val driver = PostgresNativeDriver(
@@ -227,8 +227,18 @@ class PostgresNativeSqlDelightDriverTest {
         assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS copying;", parameters = 0).value)
         assertEquals(0, driver.execute(null, "CREATE TABLE copying(a int primary key);", parameters = 0).value)
         driver.execute(-42, "COPY copying FROM STDIN (FORMAT CSV);", 0)
-        val results = driver.copy("1\n2\n")
-        assertEquals(2, results)
+        val results = driver.copy(sequenceOf("1\n2\n", "3\n4\n"))
+        assertEquals(4, results)
+        assertEquals(
+            listOf(1, 2, 3, 4),
+            driver.executeQuery(null, "SELECT * FROM copying", parameters = 0, binders = null, mapper = {
+                buildList {
+                    while (it.next()) {
+                        add(it.getLong(0)!!.toInt())
+                    }
+                }
+            }).value
+        )
     }
 
     @Test

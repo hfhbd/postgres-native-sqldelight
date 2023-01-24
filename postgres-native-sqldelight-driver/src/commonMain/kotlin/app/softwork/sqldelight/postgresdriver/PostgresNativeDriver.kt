@@ -276,10 +276,15 @@ public class PostgresNativeDriver(
 
     // Custom functions
 
-    public fun copy(stdin: String): Long {
-        val status = PQputCopyData(conn, stdin, stdin.encodeToByteArray().size)
-        check(status == 1) {
-            conn.error()
+    /**
+     * Each element of stdin can be up to 2 GB.
+     */
+    public fun copy(stdin: Sequence<String>): Long {
+        for (stdin in stdin) {
+            val status = PQputCopyData(conn, stdin, stdin.encodeToByteArray().size)
+            check(status == 1) {
+                conn.error()
+            }
         }
         val end = PQputCopyEnd(conn, null)
         check(end == 1) {
