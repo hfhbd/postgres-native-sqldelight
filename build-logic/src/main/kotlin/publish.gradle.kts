@@ -1,4 +1,3 @@
-import org.gradle.api.artifacts.repositories.*
 import org.gradle.api.publish.maven.*
 import org.gradle.api.tasks.bundling.*
 import org.gradle.kotlin.dsl.*
@@ -48,4 +47,10 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKey?.let { String(Base64.getDecoder().decode(it)).trim() }, signingPassword)
     sign(publishing.publications)
+}
+
+// https://youtrack.jetbrains.com/issue/KT-46466
+val signingTasks = tasks.withType<Sign>()
+tasks.withType<AbstractPublishToMaven>().configureEach {
+    dependsOn(signingTasks)
 }
