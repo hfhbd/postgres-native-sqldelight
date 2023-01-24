@@ -12,12 +12,6 @@ plugins {
 val emptyJar by tasks.registering(Jar::class) { }
 
 publishing {
-    repositories {
-        maven(url = "https://maven.pkg.github.com/hfhbd/kobol") {
-            name = "GitHubPackages"
-            credentials(PasswordCredentials::class)
-        }
-    }
     publications.configureEach {
         this as MavenPublication
         artifact(emptyJar) {
