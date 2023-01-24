@@ -32,7 +32,7 @@ class PostgresNativeDriverTest {
             time = LocalTime(12, 42, 0, 0),
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
+            interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242000),
             uuid = UUID.NIL
         )
         queries.create(
@@ -63,7 +63,7 @@ class PostgresNativeDriverTest {
             time = LocalTime(12, 42, 0, 0),
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
+            interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242000),
             uuid = UUID.NIL,
         )
         assertEquals(foo, queries.get().executeAsOne())
@@ -123,7 +123,7 @@ class PostgresNativeDriverTest {
             time = LocalTime(12, 42, 0, 0),
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
+            interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242),
             uuid = UUID.NIL
         )
         val userQueries = db.usersQueries
@@ -192,7 +192,7 @@ class PostgresNativeDriverTest {
             time = LocalTime(12, 42, 0, 0),
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
-            interval = 42.seconds,
+            interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242),
             uuid = UUID.NIL
         )
         val userQueries = db.usersQueries
