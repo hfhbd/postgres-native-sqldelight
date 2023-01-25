@@ -49,3 +49,10 @@ licensee {
     allow("MIT")
     allowUrl("https://jdbc.postgresql.org/about/license.html")
 }
+
+publishing {
+    publications.configureEach { 
+        this as MavenPublication
+        from(components["java"])
+    }
+}
