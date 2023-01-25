@@ -51,8 +51,7 @@ licensee {
 }
 
 publishing {
-    publications.configureEach { 
-        this as MavenPublication
+    publications.register<MavenPublication>("maven") {
         from(components["java"])
     }
 }

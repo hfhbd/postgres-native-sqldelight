@@ -13,8 +13,10 @@ val emptyJar by tasks.registering(Jar::class) { }
 publishing {
     publications.configureEach {
         this as MavenPublication
-        artifact(emptyJar) {
-            classifier = "javadoc"
+        if (project.name != "postgres-native-sqldelight-dialect") {
+            artifact(emptyJar) {
+                classifier = "javadoc"
+            }
         }
         pom {
             name.set("app.softwork Postgres Native Driver and SqlDelight Dialect")
