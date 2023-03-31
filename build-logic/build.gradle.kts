@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.20")
     implementation("com.alecstrong:grammar-kit-composer:0.1.12")
     implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
     implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.13.0")
