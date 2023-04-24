@@ -1,5 +1,10 @@
 plugins {
     io.github.`gradle-nexus`.`publish-plugin`
+    org.jetbrains.dokka
+}
+
+tasks.dokkaHtmlMultiModule {
+    includes.from("README.md")
 }
 
 nexusPublishing {

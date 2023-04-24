@@ -1,17 +1,5 @@
-import org.gradle.api.*
-import org.gradle.api.artifacts.dsl.*
-import org.gradle.api.initialization.*
-import org.gradle.kotlin.dsl.*
-
-class MyRepos : Plugin<Settings> {
-    override fun apply(settings: Settings) {
-        settings.dependencyResolutionManagement {
-            repositories {
-                repos()
-            }
-        }
-    }
-}
+import org.gradle.api.artifacts.dsl.RepositoryHandler
+import org.gradle.kotlin.dsl.maven
 
 fun RepositoryHandler.repos() {
     mavenCentral()

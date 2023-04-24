@@ -5,6 +5,7 @@ plugins {
     app.cash.licensee
     repos
     publish
+    org.jetbrains.dokka
 }
 
 kotlin {

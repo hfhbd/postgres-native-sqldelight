@@ -9,19 +9,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.13.1")
     implementation("app.cash.sqldelight:gradle-plugin:2.0.0-alpha05")
     implementation("app.cash.licensee:licensee-gradle-plugin:1.6.0")
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:1.8.10")
 }
 
-kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
-
-gradlePlugin {
-    plugins {
-        register("MyRepos") {
-            id = "MyRepos"
-            implementationClass = "MyRepos"
-        }
-    }
-}
+kotlin.jvmToolchain(17)
