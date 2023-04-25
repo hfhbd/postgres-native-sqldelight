@@ -34,7 +34,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api("io.ktor:ktor-network:2.3.0")
+                implementation("io.ktor:ktor-network:2.3.0")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
                 api("app.cash.sqldelight:runtime:2.0.0-alpha05")
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
@@ -52,4 +52,16 @@ kotlin {
 
 licensee {
     allow("Apache-2.0")
+}
+
+tasks.dokkaHtmlPartial {
+    dokkaSourceSets.configureEach {
+        externalDocumentationLink("https://cashapp.github.io/sqldelight/2.0.0-alpha05/2.x/")
+        externalDocumentationLink(
+            url = "https://kotlinlang.org/api/kotlinx-datetime/",
+            packageListUrl = "https://kotlinlang.org/api/kotlinx-datetime/kotlinx-datetime/package-list",
+        )
+        externalDocumentationLink("https://uuid.softwork.app")
+        externalDocumentationLink("https://kotlinlang.org/api/kotlinx.coroutines/")
+    }
 }
