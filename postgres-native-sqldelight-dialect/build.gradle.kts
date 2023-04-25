@@ -6,7 +6,6 @@ plugins {
     repos
     publish
     exclude
-    org.jetbrains.dokka
 }
 
 java {
