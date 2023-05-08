@@ -19,7 +19,7 @@ kotlin {
             dependencies {
                 implementation(projects.postgresNativeSqldelightDriver)
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.0")
             }
         }
     }
