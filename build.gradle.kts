@@ -1,6 +1,6 @@
 plugins {
-    io.github.`gradle-nexus`.`publish-plugin`
-    org.jetbrains.dokka
+    id("io.github.gradle-nexus.publish-plugin")
+    id("org.jetbrains.dokka")
 }
 
 tasks.dokkaHtmlMultiModule {

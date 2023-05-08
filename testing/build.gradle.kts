@@ -2,11 +2,10 @@ import org.jetbrains.kotlin.konan.target.*
 
 plugins {
     kotlin("multiplatform")
-    repos
+    id("repos")
 }
 
 kotlin {
-
     when (HostManager.host) {
         KonanTarget.LINUX_X64 -> linuxX64()
         KonanTarget.MACOS_ARM64 -> macosArm64()
@@ -19,7 +18,7 @@ kotlin {
             dependencies {
                 implementation(projects.postgresNativeSqldelightDriver)
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+                implementation(libs.coroutines.test)
             }
         }
     }

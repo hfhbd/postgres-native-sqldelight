@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.konan.target.*
 
 plugins {
     kotlin("multiplatform")
-    app.cash.sqldelight
-    repos
+    id("app.cash.sqldelight")
+    id("repos")
 }
 
 kotlin {
@@ -19,13 +19,13 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.postgresNativeSqldelightDriver)
-                implementation("app.cash.sqldelight:coroutines-extensions:2.0.0-alpha05")
+                implementation(libs.sqldelight.coroutines)
             }
         }
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+                implementation(libs.coroutines.test)
             }
         }
     }
