@@ -35,7 +35,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation("io.ktor:ktor-network:2.3.0")
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0")
                 api("app.cash.sqldelight:runtime:2.0.0-alpha05")
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
                 api("app.softwork:kotlinx-uuid-core:0.0.18")
