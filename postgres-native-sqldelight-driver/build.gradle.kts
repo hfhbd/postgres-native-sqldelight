@@ -2,10 +2,10 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 plugins {
     kotlin("multiplatform")
-    app.cash.licensee
-    repos
-    publish
-    org.jetbrains.dokka
+    id("app.cash.licensee")
+    id("repos")
+    id("publish")
+    id("org.jetbrains.dokka")
 }
 
 kotlin {
@@ -34,11 +34,11 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.ktor:ktor-network:2.3.0")
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-                api("app.cash.sqldelight:runtime:2.0.0-alpha05")
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
-                api("app.softwork:kotlinx-uuid-core:0.0.18")
+                implementation(libs.ktor.network)
+                api(libs.coroutines.core)
+                api(libs.sqldelight.runtime)
+                api(libs.datetime)
+                api(libs.uuid)
             }
         }
         commonTest {

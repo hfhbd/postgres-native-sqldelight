@@ -1,11 +1,11 @@
 plugins {
     kotlin("jvm")
-    com.alecstrong.grammar.kit.composer
-    org.jetbrains.kotlinx.`binary-compatibility-validator`
-    app.cash.licensee
-    repos
-    publish
-    exclude
+    id("com.alecstrong.grammar.kit.composer")
+    id("org.jetbrains.kotlinx.binary-compatibility-validator")
+    id("app.cash.licensee")
+    id("repos")
+    id("publish")
+    id("exclude")
 }
 
 java {
@@ -13,21 +13,19 @@ java {
     withSourcesJar()
 }
 
-val idea = "222.4459.24"
-
 grammarKit {
-    intellijRelease.set(idea)
+    intellijRelease.set(libs.versions.idea)
 }
 
 dependencies {
-    api("app.cash.sqldelight:postgresql-dialect:2.0.0-alpha05")
+    api(libs.sqldelight.postgresql.dialect)
 
-    api("app.cash.sqldelight:dialect-api:2.0.0-alpha05")
+    api(libs.sqldelight.dialect.api)
 
-    compileOnly("com.jetbrains.intellij.platform:analysis-impl:$idea")
+    compileOnly(libs.intellij.analysis)
 
-    testImplementation("com.jetbrains.intellij.platform:analysis-impl:$idea")
     testImplementation(kotlin("test"))
+    testImplementation(libs.intellij.analysis)
 }
 
 kotlin {
