@@ -1,7 +1,7 @@
 [versions]
 sqldelight = "2.0.0-alpha05"
 idea = "222.4459.24"
-coroutines = "1.6.4"
+coroutines = "1.7.0"
 
 [libraries]
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version = "1.8.21" }
