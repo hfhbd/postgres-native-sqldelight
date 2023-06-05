@@ -7,7 +7,7 @@ coroutines = "1.7.1"
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version = "1.8.21" }
 grammarKit-gradlePlugin = { module = "com.alecstrong:grammar-kit-composer", version = "0.1.12" }
 publish-gradlePlugin = { module = "io.github.gradle-nexus:publish-plugin", version = "1.1.0" }
-binary-gradlePlugin = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version = "0.13.1" }
+binary-gradlePlugin = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version = "0.13.2" }
 sqldelight-gradlePlugin = { module = "app.cash.sqldelight:gradle-plugin", version.ref = "sqldelight" }
 licensee-gradlePlugin = { module = "app.cash.licensee:licensee-gradle-plugin", version = "1.7.0" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version = "1.8.10" }
