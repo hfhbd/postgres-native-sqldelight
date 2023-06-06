@@ -10,7 +10,7 @@ publish-gradlePlugin = { module = "io.github.gradle-nexus:publish-plugin", versi
 binary-gradlePlugin = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version = "0.13.2" }
 sqldelight-gradlePlugin = { module = "app.cash.sqldelight:gradle-plugin", version.ref = "sqldelight" }
 licensee-gradlePlugin = { module = "app.cash.licensee:licensee-gradle-plugin", version = "1.7.0" }
-dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version = "1.8.10" }
+dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version = "1.8.20" }
 
 sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" }
 sqldelight-postgresql-dialect = { module = "app.cash.sqldelight:postgresql-dialect", version.ref = "sqldelight" }
