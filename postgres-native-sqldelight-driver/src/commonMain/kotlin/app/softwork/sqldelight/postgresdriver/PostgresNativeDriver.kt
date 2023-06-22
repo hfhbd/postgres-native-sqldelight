@@ -1,10 +1,17 @@
 package app.softwork.sqldelight.postgresdriver
 
-import app.cash.sqldelight.*
+import app.cash.sqldelight.Query
+import app.cash.sqldelight.Transacter
 import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import libpq.*
 
 public class PostgresNativeDriver(
@@ -163,11 +170,21 @@ public class PostgresNativeDriver(
 
     private fun preparedStatementExists(identifier: Int): Boolean {
         val result =
-            executeQuery(null, "SELECT name FROM pg_prepared_statements WHERE name = '$identifier'", parameters = 0, binders = null, mapper = {
-                if (it.next()) {
-                    it.getString(0)
-                } else null
-            })
+            executeQuery(
+                null,
+                "SELECT name FROM pg_prepared_statements WHERE name = $1",
+                parameters = 1,
+                binders = {
+                    bindString(0, identifier.toString())
+                },
+                mapper = {
+                    it.next().map { next ->
+                        if (next) {
+                            it.getString(0)
+                        } else null
+                    }
+                }
+            )
         return result.value != null
     }
 
@@ -204,10 +221,10 @@ public class PostgresNativeDriver(
     override fun <R> executeQuery(
         identifier: Int?,
         sql: String,
-        mapper: (SqlCursor) -> R,
+        mapper: (SqlCursor) -> QueryResult<R>,
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
-    ): QueryResult.Value<R> {
+    ): QueryResult<R> {
         val preparedStatement = preparedStatement(parameters, binders)
         val result = if (identifier != null) {
             checkPreparedStatement(identifier, sql, parameters, preparedStatement)
@@ -237,8 +254,7 @@ public class PostgresNativeDriver(
             }
         }.check(conn)
 
-        val value = NoCursor(result).use(mapper)
-        return QueryResult.Value(value = value)
+        return NoCursor(result).use(mapper)
     }
 
     internal companion object {
@@ -261,7 +277,7 @@ public class PostgresNativeDriver(
     private inner class Transaction(
         override val enclosingTransaction: Transacter.Transaction?
     ) : Transacter.Transaction() {
-        override fun endTransaction(successful: Boolean): QueryResult.Unit {
+        override fun endTransaction(successful: Boolean): QueryResult.Value<Unit> {
             if (enclosingTransaction == null) {
                 if (successful) {
                     conn.exec("END")
@@ -304,7 +320,7 @@ public class PostgresNativeDriver(
     ): Flow<R> = flow {
         val (result, cursorName) = prepareQuery(identifier, sql, parameters, binders)
         RealCursor(result, cursorName, conn, fetchSize).use {
-            while (it.next()) {
+            while (it.next().value) {
                 emit(mapper(it))
             }
         }
@@ -349,23 +365,6 @@ public class PostgresNativeDriver(
                 )
             }
         }.check(conn) to cursorName
-    }
-
-    @Deprecated(
-        "Use executeQueryAsFlow instead or enter your use-case in https://github.com/hfhbd/postgres-native-sqldelight/issues/121",
-        replaceWith = ReplaceWith("executeQueryAsFlow(identifier, sql, mapper, parameters, fetchSize, binders)")
-    )
-    public fun <R> executeQueryWithNativeCursor(
-        identifier: Int?,
-        sql: String,
-        mapper: (PostgresCursor) -> R,
-        parameters: Int,
-        fetchSize: Int = 1,
-        binders: (PostgresPreparedStatement.() -> Unit)?
-    ): QueryResult.Value<R> {
-        val (result, cursorName) = prepareQuery(identifier, sql, parameters, binders)
-        val value = RealCursor(result, cursorName, conn, fetchSize).use(mapper)
-        return QueryResult.Value(value = value)
     }
 }
 
@@ -422,4 +421,11 @@ public fun PostgresNativeDriver(
         conn.error()
     }
     return PostgresNativeDriver(conn!!, listenerSupport = listenerSupport)
+}
+
+private fun <T, R> QueryResult<T>.map(action: (T) -> R): QueryResult<R> = when (this) {
+    is QueryResult.Value -> QueryResult.Value(action(value))
+    is QueryResult.AsyncValue -> QueryResult.AsyncValue {
+        action(await())
+    }
 }

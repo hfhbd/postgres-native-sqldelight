@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.konan.target.*
 plugins {
     kotlin("multiplatform")
     id("app.cash.sqldelight")
-    id("repos")
 }
 
 kotlin {

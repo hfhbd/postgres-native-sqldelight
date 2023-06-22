@@ -1,9 +1,14 @@
 package app.softwork.sqldelight.postgresdriver
 
-import app.cash.sqldelight.*
-import kotlinx.coroutines.*
+import app.cash.sqldelight.Query
+import app.cash.sqldelight.db.QueryResult
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,11 +44,13 @@ class PostgresNativeDriverTest {
         }.value
         assertEquals(2, result)
         val notPrepared = driver.executeQuery(null, "SELECT * FROM baz LIMIT 1;", parameters = 0, mapper = {
-            assertTrue(it.next())
-            Simple(
-                index = it.getLong(0)!!.toInt(),
-                name = it.getString(1),
-                byteArray = it.getBytes(2)
+            assertTrue(it.next().value)
+            QueryResult.Value(
+                Simple(
+                    index = it.getLong(0)!!.toInt(),
+                    name = it.getString(1),
+                    byteArray = it.getBytes(2)
+                )
             )
         })
         assertEquals(Simple(0, null, null), notPrepared.value)
@@ -52,8 +59,8 @@ class PostgresNativeDriverTest {
             sql = "SELECT * FROM baz;",
             parameters = 0, binders = null,
             mapper = {
-                buildList {
-                    while (it.next()) {
+                QueryResult.Value(buildList {
+                    while (it.next().value) {
                         add(
                             Simple(
                                 index = it.getLong(0)!!.toInt(),
@@ -62,7 +69,7 @@ class PostgresNativeDriverTest {
                             )
                         )
                     }
-                }
+                })
             }
         ).value
 
@@ -78,49 +85,38 @@ class PostgresNativeDriverTest {
         )
 
         expect(7) {
-            val cursorList = driver.executeQueryWithNativeCursor(
+            val cursorList = driver.executeQueryAsFlow(
                 -99,
                 "SELECT * FROM baz",
                 fetchSize = 4,
                 parameters = 0,
                 binders = null,
                 mapper = {
-                    buildList {
-                        while (it.next()) {
-                            add(
-                                Simple(
-                                    index = it.getLong(0)!!.toInt(),
-                                    name = it.getString(1),
-                                    byteArray = it.getBytes(2)
-                                )
-                            )
-                        }
-                    }
-                }).value
-            cursorList.size
+                    Simple(
+                        index = it.getLong(0)!!.toInt(),
+                        name = it.getString(1),
+                        byteArray = it.getBytes(2)
+                    )
+                })
+            cursorList.count()
         }
 
         expect(7) {
-            val cursorList = driver.executeQueryWithNativeCursor(
+            val cursorList = driver.executeQueryAsFlow(
                 -5,
                 "SELECT * FROM baz",
                 fetchSize = 1,
                 parameters = 0,
                 binders = null,
                 mapper = {
-                    buildList {
-                        while (it.next()) {
-                            add(
-                                Simple(
-                                    index = it.getLong(0)!!.toInt(),
-                                    name = it.getString(1),
-                                    byteArray = it.getBytes(2)
-                                )
-                            )
-                        }
-                    }
-                }).value
-            cursorList.size
+                    Simple(
+                        index = it.getLong(0)!!.toInt(),
+                        name = it.getString(1),
+                        byteArray = it.getBytes(2)
+
+                    )
+                })
+            cursorList.count()
         }
 
         val cursorFlow = driver.executeQueryAsFlow(
@@ -140,26 +136,20 @@ class PostgresNativeDriverTest {
         assertEquals(4, cursorFlow.take(4).count())
 
         expect(0) {
-            val cursorList = driver.executeQueryWithNativeCursor(
+            val cursorList = driver.executeQueryAsFlow(
                 -100,
                 "SELECT * FROM baz WHERE a = -1",
                 fetchSize = 1,
                 parameters = 0,
                 binders = null,
                 mapper = {
-                    buildList {
-                        while (it.next()) {
-                            add(
-                                Simple(
-                                    index = it.getLong(0)!!.toInt(),
-                                    name = it.getString(1),
-                                    byteArray = it.getBytes(2)
-                                )
-                            )
-                        }
-                    }
-                }).value
-            cursorList.size
+                    Simple(
+                        index = it.getLong(0)!!.toInt(),
+                        name = it.getString(1),
+                        byteArray = it.getBytes(2)
+                    )
+                })
+            cursorList.count()
         }
     }
 
@@ -232,11 +222,11 @@ class PostgresNativeDriverTest {
         assertEquals(
             listOf(1, 2, 3, 4),
             driver.executeQuery(null, "SELECT * FROM copying", parameters = 0, binders = null, mapper = {
-                buildList {
-                    while (it.next()) {
+                QueryResult.Value(buildList {
+                    while (it.next().value) {
                         add(it.getLong(0)!!.toInt())
                     }
-                }
+                })
             }).value
         )
     }
@@ -262,11 +252,7 @@ class PostgresNativeDriverTest {
         )
 
         val results = MutableStateFlow(0)
-        val listener = object : Query.Listener {
-            override fun queryResultsChanged() {
-                results.update { it + 1 }
-            }
-        }
+        val listener = Query.Listener { results.update { it + 1 } }
         driver.addListener(listener, arrayOf("foo", "bar"))
 
         val dbDelay = 2.seconds
@@ -311,11 +297,7 @@ class PostgresNativeDriverTest {
         )
 
         val results = MutableStateFlow(0)
-        val listener = object : Query.Listener {
-            override fun queryResultsChanged() {
-                results.update { it + 1 }
-            }
-        }
+        val listener = Query.Listener { results.update { it + 1 } }
         driver.addListener(listener, arrayOf("foo", "bar"))
         runCurrent()
         driver.notifyListeners(arrayOf("foo"))

@@ -5,7 +5,7 @@ import kotlinx.cinterop.*
 import libpq.*
 
 /**
- * Must be inside a transaction!
+ * Must be used inside a transaction!
  */
 internal class RealCursor(
     result: CPointer<PGresult>,
@@ -22,7 +22,7 @@ internal class RealCursor(
     override var currentRowIndex = -1
     private var maxRowIndex = -1
 
-    override fun next(): Boolean {
+    override fun next(): QueryResult.Value<Boolean> {
         if (currentRowIndex == maxRowIndex) {
             currentRowIndex = -1
         }
@@ -32,7 +32,7 @@ internal class RealCursor(
         }
         return if (currentRowIndex < maxRowIndex) {
             currentRowIndex += 1
-            true
-        } else false
+            QueryResult.Value(true)
+        } else QueryResult.Value(false)
     }
 }
