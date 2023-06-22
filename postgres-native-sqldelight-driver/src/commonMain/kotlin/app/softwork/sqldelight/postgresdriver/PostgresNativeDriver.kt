@@ -2,13 +2,17 @@ package app.softwork.sqldelight.postgresdriver
 
 import app.cash.sqldelight.*
 import app.cash.sqldelight.db.*
-import kotlinx.cinterop.*
+import io.ktor.network.selector.*
+import io.ktor.network.sockets.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.charsets.*
+import io.ktor.utils.io.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import libpq.*
 
-public class PostgresNativeDriver(
-    private val conn: CPointer<PGconn>,
+public class PostgresNativeDriver
+internal constructor(
+    private val conn: PGConnection,
     private val listenerSupport: ListenerSupport
 ) : SqlDriver {
     private var transaction: Transacter.Transaction? = null
@@ -16,7 +20,7 @@ public class PostgresNativeDriver(
     private val notifications: Flow<String>
 
     init {
-        require(PQstatus(conn) == ConnStatusType.CONNECTION_OK) {
+        require(conn.status == PGStatus.CONNECTION_OK) {
             conn.error()
         }
         setDateOutputs()
@@ -110,64 +114,55 @@ public class PostgresNativeDriver(
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): QueryResult.Value<Long> {
-        val preparedStatement = if (parameters != 0) PostgresPreparedStatement(parameters).apply {
+        val parameters = if (parameters != 0) PostgresPreparedStatement(parameters).let {
             if (binders != null) {
-                binders()
+                it.binders()
             }
-        } else null
+            it.values.mapIndexed { index, parameter ->
+                requireNotNull(parameter) {
+                    "No parameter specified for $index."
+                }
+            }
+        } else emptyList()
         val result = if (identifier != null) {
             if (!preparedStatementExists(identifier)) {
-                PQprepare(
-                    conn,
+                conn.prepare(
                     stmtName = identifier.toString(),
                     query = sql,
-                    nParams = parameters,
-                    paramTypes = preparedStatement?.types?.refTo(0)
+                    parameterTypes = parameters.map { it.type }
                 ).check(conn).clear()
             }
-            memScoped {
-                PQexecPrepared(
-                    conn,
-                    stmtName = identifier.toString(),
-                    nParams = parameters,
-                    paramValues = preparedStatement?.values(this),
-                    paramFormats = preparedStatement?.formats?.refTo(0),
-                    paramLengths = preparedStatement?.lengths?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT
-                )
-            }
+            conn.execPrepared(
+                stmtName = identifier.toString(),
+                parameters = parameters,
+                resultFormat = Format.Text
+            )
         } else {
-            memScoped {
-                PQexecParams(
-                    conn,
-                    command = sql,
-                    nParams = parameters,
-                    paramValues = preparedStatement?.values(this),
-                    paramFormats = preparedStatement?.formats?.refTo(0),
-                    paramLengths = preparedStatement?.lengths?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT,
-                    paramTypes = preparedStatement?.types?.refTo(0)
-                )
-            }
+            conn.execParams(
+                command = sql,
+                parameters = parameters,
+                resultFormat = Format.Text,
+            )
         }.check(conn)
 
         return QueryResult.Value(value = result.rows)
     }
 
-    private val CPointer<PGresult>.rows: Long
-        get() {
-            val rows = PQcmdTuples(this)!!.toKString()
-            clear()
-            return rows.toLongOrNull() ?: 0
-        }
-
     private fun preparedStatementExists(identifier: Int): Boolean {
         val result =
-            executeQuery(null, "SELECT name FROM pg_prepared_statements WHERE name = '$identifier'", parameters = 0, binders = null, mapper = {
-                if (it.next()) {
-                    it.getString(0)
-                } else null
-            })
+            executeQuery(
+                null,
+                "SELECT name FROM pg_prepared_statements WHERE name = '$identifier'",
+                parameters = 0,
+                binders = null,
+                mapper = {
+                    it as PostgresCursor
+                    QueryResult.Value(
+                        if (it.next().value) {
+                            it.getString(0)
+                        } else null
+                    )
+                })
         return result.value != null
     }
 
@@ -187,16 +182,17 @@ public class PostgresNativeDriver(
     private fun checkPreparedStatement(
         identifier: Int,
         sql: String,
-        parameters: Int,
         preparedStatement: PostgresPreparedStatement?
     ) {
         if (!preparedStatementExists(identifier)) {
-            PQprepare(
-                conn,
+            conn.prepare(
                 stmtName = identifier.toString(),
                 query = sql,
-                nParams = parameters,
-                paramTypes = preparedStatement?.types?.refTo(0)
+                parameterTypes = preparedStatement?.values?.mapIndexed { index, it ->
+                    requireNotNull(it) {
+                        "No parameter specified for $index."
+                    }.type
+                } ?: emptyList(),
             ).check(conn).clear()
         }
     }
@@ -204,37 +200,31 @@ public class PostgresNativeDriver(
     override fun <R> executeQuery(
         identifier: Int?,
         sql: String,
-        mapper: (SqlCursor) -> R,
+        mapper: (SqlCursor) -> QueryResult<R>,
         parameters: Int,
         binders: (SqlPreparedStatement.() -> Unit)?
     ): QueryResult.Value<R> {
         val preparedStatement = preparedStatement(parameters, binders)
         val result = if (identifier != null) {
             checkPreparedStatement(identifier, sql, parameters, preparedStatement)
-            memScoped {
-                PQexecPrepared(
-                    conn,
-                    stmtName = identifier.toString(),
-                    nParams = parameters,
-                    paramValues = preparedStatement?.values(this),
-                    paramLengths = preparedStatement?.lengths?.refTo(0),
-                    paramFormats = preparedStatement?.formats?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT
-                )
-            }
+            conn.execPrepared(
+                stmtName = identifier.toString(),
+                nParams = parameters,
+                paramValues = preparedStatement?.values,
+                paramLengths = preparedStatement?.lengths,
+                paramFormats = preparedStatement?.formats,
+                resultFormat = Format.Text
+            )
         } else {
-            memScoped {
-                PQexecParams(
-                    conn,
-                    command = sql,
-                    nParams = parameters,
-                    paramValues = preparedStatement?.values(this),
-                    paramLengths = preparedStatement?.lengths?.refTo(0),
-                    paramFormats = preparedStatement?.formats?.refTo(0),
-                    paramTypes = preparedStatement?.types?.refTo(0),
-                    resultFormat = TEXT_RESULT_FORMAT
-                )
-            }
+            conn.execParams(
+                command = sql,
+                nParams = parameters,
+                paramValues = preparedStatement?.values(this),
+                paramLengths = preparedStatement?.lengths?.refTo(0),
+                paramFormats = preparedStatement?.formats?.refTo(0),
+                paramTypes = preparedStatement?.types?.refTo(0),
+                resultFormat = TEXT_RESULT_FORMAT
+            )
         }.check(conn)
 
         val value = NoCursor(result).use(mapper)
@@ -369,38 +359,22 @@ public class PostgresNativeDriver(
     }
 }
 
-private fun CPointer<PGconn>?.error(): String {
-    val errorMessage = PQerrorMessage(this)!!.toKString()
-    PQfinish(this)
-    return errorMessage
-}
-
-internal fun CPointer<PGresult>?.clear() {
-    PQclear(this)
-}
-
-internal fun CPointer<PGconn>.exec(sql: String) {
-    val result = PQexec(this, sql)
-    result.check(this)
-    result.clear()
-}
-
-internal fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresult> {
-    val status = PQresultStatus(this)
-    check(status == PGRES_TUPLES_OK || status == PGRES_COMMAND_OK || status == PGRES_COPY_IN) {
+internal fun PGResult.check(conn: PGConnection): PGResult {
+    val status = status
+    check(status == PGStatus.PGRES_TUPLES_OK || status == PGStatus.PGRES_COMMAND_OK || status == PGStatus.PGRES_COPY_IN) {
         conn.error()
     }
-    return this!!
+    return this
 }
 
-private fun CPointer<PGconn>.escaped(value: String): String {
+private fun PGConnection.escaped(value: String): String {
     val cString = PQescapeIdentifier(this, value, value.length.convert())
     val escaped = cString!!.toKString()
     PQfreemem(cString)
     return escaped
 }
 
-public fun PostgresNativeDriver(
+public suspend fun PostgresNativeDriver(
     host: String,
     database: String,
     user: String,
@@ -409,17 +383,94 @@ public fun PostgresNativeDriver(
     options: String? = null,
     listenerSupport: ListenerSupport = ListenerSupport.None
 ): PostgresNativeDriver {
-    val conn = PQsetdbLogin(
-        pghost = host,
-        pgport = port.toString(),
-        pgtty = null,
-        dbName = database,
-        login = user,
-        pwd = password,
-        pgoptions = options
+    val connection = aSocket(
+        selector = SelectorManager()
+    ).tcp().connect(
+        hostname = host,
+        port = port
+    ) {
+
+    }.connection()
+
+    connection.login(
+        database = database,
+        username = user,
+        password = password,
+        options = options
     )
-    require(PQstatus(conn) == ConnStatusType.CONNECTION_OK) {
-        conn.error()
+
+    return PostgresNativeDriver(
+        PGConnection(
+            connection
+        ),
+        listenerSupport = listenerSupport
+    )
+}
+
+private suspend fun Connection.login(
+    database: String,
+    username: String,
+    password: String,
+    options: String?
+) {
+    val size: Int
+    val startupMessage = buildPacket {
+        writeShort(3) // protocol version 3.0
+        writeShort(0)
+
+        writeText("user", charset = Charsets.ISO_8859_1)
+        writeText(username)
+
+        writeText("database", charset = Charsets.ISO_8859_1)
+        writeText(database)
+        size = this.size
     }
-    return PostgresNativeDriver(conn!!, listenerSupport = listenerSupport)
+    val data = buildPacket {
+        writeInt(size + 8)
+        writePacket(startupMessage)
+    }
+    output.writePacket(data)
+    input.awaitContent()
+    require(input.readByte() == "R".toByte())
+    val length = input.readInt()
+    when (input.readInt()) {
+        3 -> {
+            val clearTextPassword = buildPacket {
+                val headerSize: Int
+                val header = buildPacket {
+                    writeText("p")
+                    headerSize = this.size
+                }
+                val passwordSize: Int
+                val password = buildPacket {
+                    writeText(password)
+                    passwordSize = this.size
+                }
+                writePacket(header)
+                writeInt(headerSize + passwordSize + 8)
+                writePacket(password)
+            }
+            output.writePacket(clearTextPassword)
+        }
+    }
+    input.waitForReadyForQuery()
+}
+
+private suspend fun ByteReadChannel.waitForReadyForQuery(): ReadyForQuery {
+    require(readByte() == "Z".toByte())
+    val length = readInt()
+    val state = readByte().toString()
+    ReadyForQuery(
+        transactionState = ReadyForQuery.TransactionStatus.
+    )
+}
+
+internal data class ReadyForQuery(
+    val transactionState: TransactionStatus
+) {
+    internal enum class TransactionStatus(val type: String) {
+        Idle("I"),
+        Transaction("T"),
+        Error("E");
+    }
 }

@@ -1,11 +1,10 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
-
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
     id("app.cash.licensee")
-    id("repos")
     id("publish")
     id("org.jetbrains.dokka")
+    id("org.jetbrains.kotlinx.binary-compatibility-validator")
 }
 
 kotlin {
@@ -16,20 +15,13 @@ kotlin {
         }
     }
 
-    fun KotlinNativeTarget.config() {
-        compilations.named("main") {
-            cinterops {
-                register("libpq") {
-                    defFile(project.file("src/nativeInterop/cinterop/libpq.def"))
-                }
-            }
-        }
-    }
-
-    macosArm64 { config() }
-    macosX64 { config() }
-    linuxX64 { config() }
-    // mingwX64 { config() }
+    targetHierarchy.default()
+    jvm()
+    macosArm64()
+    macosX64()
+    linuxX64()
+    // linuxArm64 { config() }
+    // mingwX64()
 
     sourceSets {
         commonMain {
@@ -37,6 +29,7 @@ kotlin {
                 implementation(libs.ktor.network)
                 api(libs.coroutines.core)
                 api(libs.sqldelight.runtime)
+                api(libs.serialization.core)
                 api(libs.datetime)
                 api(libs.uuid)
             }
@@ -44,7 +37,7 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.0")
+                implementation(libs.coroutines.test)
             }
         }
     }

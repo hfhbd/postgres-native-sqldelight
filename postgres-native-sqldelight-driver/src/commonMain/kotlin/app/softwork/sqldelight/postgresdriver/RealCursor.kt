@@ -1,38 +1,36 @@
 package app.softwork.sqldelight.postgresdriver
 
 import app.cash.sqldelight.db.*
-import kotlinx.cinterop.*
-import libpq.*
 
 /**
- * Must be inside a transaction!
+ * Must be used inside a transaction.
  */
 internal class RealCursor(
-    result: CPointer<PGresult>,
+    result: PGResult,
     private val name: String,
-    private val conn: CPointer<PGconn>,
+    private val conn: PGConnection,
     private val fetchSize: Int
 ) : PostgresCursor(result), Closeable {
     override fun close() {
         result.clear()
-        conn.exec("CLOSE $name")
-        conn.exec("END")
+        conn.execParams("CLOSE $name")
+        conn.execParams("END")
     }
 
     override var currentRowIndex = -1
     private var maxRowIndex = -1
 
-    override fun next(): Boolean {
+    override fun next(): QueryResult.Value<Boolean> {
         if (currentRowIndex == maxRowIndex) {
             currentRowIndex = -1
         }
         if (currentRowIndex == -1) {
-            result = PQexec(conn, "FETCH $fetchSize IN $name").check(conn)
-            maxRowIndex = PQntuples(result) - 1
+            result = conn.execParams("FETCH $fetchSize IN $name", emptyList(), Format.Text).check(conn)
+            maxRowIndex = result.rows.toInt() - 1
         }
         return if (currentRowIndex < maxRowIndex) {
             currentRowIndex += 1
-            true
-        } else false
+            QueryResult.Value(true)
+        } else QueryResult.Value(false)
     }
 }

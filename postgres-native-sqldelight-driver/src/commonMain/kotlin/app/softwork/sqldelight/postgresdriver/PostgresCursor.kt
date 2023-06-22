@@ -1,28 +1,26 @@
 package app.softwork.sqldelight.postgresdriver
 
-import app.cash.sqldelight.db.*
-import kotlinx.cinterop.*
+import app.cash.sqldelight.db.QueryResult
+import app.cash.sqldelight.db.SqlCursor
 import kotlinx.datetime.*
-import kotlinx.uuid.*
-import libpq.*
-import kotlin.time.*
+import kotlinx.uuid.UUID
+import kotlinx.uuid.toUUID
 
 public sealed class PostgresCursor(
-    internal var result: CPointer<PGresult>
+    internal var result: PGResult
 ) : SqlCursor {
+    abstract override fun next(): QueryResult.Value<Boolean>
+    
     internal abstract val currentRowIndex: Int
 
     override fun getBoolean(index: Int): Boolean? = getString(index)?.toBoolean()
 
     override fun getBytes(index: Int): ByteArray? {
-        val isNull = PQgetisnull(result, tup_num = currentRowIndex, field_num = index) == 1
-        return if (isNull) {
-            null
-        } else {
-            val bytes = PQgetvalue(result, tup_num = currentRowIndex, field_num = index)!!
-            val length = PQgetlength(result, tup_num = currentRowIndex, field_num = index)
-            bytes.fromHex(length)
+        val value = result[currentRowIndex, index] ?: return null
+        require(value is Parameter.Bytes) {
+            "Column $index of row $currentRowIndex isn't a Binary value."
         }
+        return value.bytes?.fromHex()
     }
 
     private inline fun Int.fromHex(): Int = if (this in 48..57) {
@@ -32,10 +30,10 @@ public sealed class PostgresCursor(
     }
 
     // because "normal" CPointer<ByteVar>.toByteArray() functions does not support hex (2 Bytes) bytes
-    private fun CPointer<ByteVar>.fromHex(length: Int): ByteArray {
-        val array = ByteArray((length - 2) / 2)
+    private fun ByteArray.fromHex(): ByteArray {
+        val array = ByteArray((size - 2) / 2)
         var index = 0
-        for (i in 2 until length step 2) {
+        for (i in 2 until size step 2) {
             val first = this[i].toInt().fromHex()
             val second = this[i + 1].toInt().fromHex()
             val octet = first.shl(4).or(second)
@@ -50,13 +48,11 @@ public sealed class PostgresCursor(
     override fun getLong(index: Int): Long? = getString(index)?.toLong()
 
     override fun getString(index: Int): String? {
-        val isNull = PQgetisnull(result, tup_num = currentRowIndex, field_num = index) == 1
-        return if (isNull) {
-            null
-        } else {
-            val value = PQgetvalue(result, tup_num = currentRowIndex, field_num = index)
-            value!!.toKString()
+        val value = result[currentRowIndex, index] ?: return null
+        require(value is Parameter.Text) {
+            "Column $index of row $currentRowIndex isn't a String value."
         }
+        return value.text
     }
 
     public fun getDate(index: Int): LocalDate? = getString(index)?.toLocalDate()

@@ -1,8 +1,0 @@
-headers = libpq-fe.h
-headerFilter = *
-package = libpq
-#staticLibraries = libpq.a
-#libraryPaths = /opt/homebrew/opt/libpq/lib
-
-compilerOpts = -I/home/linuxbrew/.linuxbrew/opt/libpq/include -I/opt/homebrew/opt/libpq/include -I/usr/local/opt/libpq/include
-linkerOpts = -L/home/linuxbrew/.linuxbrew/opt/libpq/lib -L/opt/homebrew/opt/libpq/lib -L/usr/local/opt/libpq/lib -lpq
