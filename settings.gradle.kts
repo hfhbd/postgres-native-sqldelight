@@ -1,6 +1,7 @@
 pluginManagement {
     repositories {
         mavenCentral()
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
         gradlePluginPortal()
     }
     includeBuild("build-logic")

@@ -3,13 +3,18 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.kotlin.gradlePlugin)
-    implementation(libs.grammarKit.gradlePlugin)
-    implementation(libs.publish.gradlePlugin)
-    implementation(libs.binary.gradlePlugin)
-    implementation(libs.sqldelight.gradlePlugin)
-    implementation(libs.licensee.gradlePlugin)
-    implementation(libs.dokka.gradlePlugin)
+    implementation(libs.plugins.kotlin.jvm.toDep())
+    implementation(libs.plugins.kotlin.serialization.toDep())
+    implementation(libs.plugins.grammarKit.toDep())
+    implementation(libs.plugins.publish.toDep())
+    implementation(libs.plugins.binary.toDep())
+    implementation(libs.plugins.sqldelight.toDep())
+    implementation(libs.plugins.licensee.toDep())
+    implementation(libs.plugins.dokka.toDep())
+}
+
+fun Provider<PluginDependency>.toDep() = map {
+    "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
 }
 
 kotlin.jvmToolchain(17)

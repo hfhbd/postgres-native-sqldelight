@@ -14,7 +14,7 @@ java {
 }
 
 grammarKit {
-    intellijRelease.set(libs.versions.idea)
+    intellijRelease.set("222.4459.24")
 }
 
 dependencies {
@@ -22,10 +22,10 @@ dependencies {
 
     api(libs.sqldelight.dialect.api)
 
-    compileOnly(libs.intellij.analysis)
+    compileOnly(libs.sqldelight.compiler.env)
 
     testImplementation(kotlin("test"))
-    testImplementation(libs.intellij.analysis)
+    testImplementation(libs.sqldelight.compiler.env)
 }
 
 kotlin {
