@@ -14,12 +14,12 @@ internal class NoCursor(
     private val maxRowIndex = PQntuples(result) - 1
     override var currentRowIndex = -1
 
-    override fun next(): Boolean {
+    override fun next(): QueryResult.Value<Boolean> {
         return if (currentRowIndex < maxRowIndex) {
             currentRowIndex += 1
-            true
+            QueryResult.Value(true)
         } else {
-            false
+            QueryResult.Value(false)
         }
     }
 }

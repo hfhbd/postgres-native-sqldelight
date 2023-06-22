@@ -93,7 +93,7 @@ class PostgresNativeSqldelightDriverTest {
     }
 
     @Test
-    fun remoteListenerTest() = runTest(dispatchTimeoutMs = 10.seconds.inWholeMilliseconds) {
+    fun remoteListenerTest() = runTest(timeout = 10.seconds) {
         val client = PostgresNativeDriver(
             host = "localhost",
             port = 5432,
@@ -175,7 +175,7 @@ class PostgresNativeSqldelightDriverTest {
     }
 
     @Test
-    fun localListenerTest() = runTest(dispatchTimeoutMs = 10.seconds.inWholeMilliseconds) {
+    fun localListenerTest() = runTest(timeout = 10.seconds) {
         val client = PostgresNativeDriver(
             host = "localhost",
             port = 5432,
