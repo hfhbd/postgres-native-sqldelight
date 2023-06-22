@@ -1,24 +1,29 @@
 [versions]
-sqldelight = "2.0.0-alpha05"
+kotlin = "1.8.22"
+sqldelight = "2.0.0-rc01"
 idea = "222.4459.24"
 coroutines = "1.7.1"
 
 [libraries]
-kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version = "1.8.22" }
-grammarKit-gradlePlugin = { module = "com.alecstrong:grammar-kit-composer", version = "0.1.12" }
-publish-gradlePlugin = { module = "io.github.gradle-nexus:publish-plugin", version = "1.1.0" }
-binary-gradlePlugin = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version = "0.13.2" }
-sqldelight-gradlePlugin = { module = "app.cash.sqldelight:gradle-plugin", version.ref = "sqldelight" }
-licensee-gradlePlugin = { module = "app.cash.licensee:licensee-gradle-plugin", version = "1.7.0" }
-dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version = "1.8.20" }
-
 sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" }
 sqldelight-postgresql-dialect = { module = "app.cash.sqldelight:postgresql-dialect", version.ref = "sqldelight" }
 sqldelight-dialect-api = { module = "app.cash.sqldelight:dialect-api", version.ref = "sqldelight" }
 sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
-intellij-analysis = { module = "com.jetbrains.intellij.platform:analysis-impl", version.ref = "idea" }
+sqldelight-compiler-env = { module = "app.cash.sqldelight:compiler-env", version.ref = "sqldelight" }
+
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 ktor-network = { module = "io.ktor:ktor-network", version = "2.3.1" }
 datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.4.0" }
 uuid = { module = "app.softwork:kotlinx-uuid-core", version = "0.0.20" }
+serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version = "1.5.1" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+grammarKit = { id = "com.alecstrong.grammar.kit.composer", version = "0.1.12" }
+publish = { id = "io.github.gradle-nexus.publish-plugin", version = "1.1.0" }
+binary = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.13.1" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+licensee = { id = "app.cash.licensee", version = "1.7.0" }
+dokka = { id = "org.jetbrains.dokka", version = "1.8.20" }

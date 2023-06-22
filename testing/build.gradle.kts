@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.konan.target.*
 
 plugins {
     kotlin("multiplatform")
-    id("repos")
 }
 
 kotlin {
