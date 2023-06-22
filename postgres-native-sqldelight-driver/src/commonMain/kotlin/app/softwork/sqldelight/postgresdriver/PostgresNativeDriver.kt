@@ -1,10 +1,17 @@
 package app.softwork.sqldelight.postgresdriver
 
-import app.cash.sqldelight.*
+import app.cash.sqldelight.Query
+import app.cash.sqldelight.Transacter
 import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import libpq.*
 
 public class PostgresNativeDriver(
@@ -165,9 +172,11 @@ public class PostgresNativeDriver(
         val result =
             executeQuery(
                 null,
-                "SELECT name FROM pg_prepared_statements WHERE name = '$identifier'",
-                parameters = 0,
-                binders = null,
+                "SELECT name FROM pg_prepared_statements WHERE name = $1",
+                parameters = 1,
+                binders = {
+                    bindString(0, identifier.toString())
+                },
                 mapper = {
                     it.next().map { next ->
                         if (next) {
