@@ -51,7 +51,7 @@ public class PostgresNativeDriver(
             }
         }
 
-    override fun addListener(listener: Query.Listener, queryKeys: Array<String>) {
+    override fun addListener(vararg queryKeys: String, listener: Query.Listener) {
         when (listenerSupport) {
             ListenerSupport.None -> return
             is ListenerSupport.Local -> {
@@ -74,7 +74,7 @@ public class PostgresNativeDriver(
         }
     }
 
-    override fun notifyListeners(queryKeys: Array<String>) {
+    override fun notifyListeners(vararg queryKeys: String) {
         when (listenerSupport) {
             is ListenerSupport.Local -> {
                 listenerSupport.notificationScope.launch {
@@ -95,7 +95,7 @@ public class PostgresNativeDriver(
         }
     }
 
-    override fun removeListener(listener: Query.Listener, queryKeys: Array<String>) {
+    override fun removeListener(vararg queryKeys: String, listener: Query.Listener) {
         val queryListeners = listeners[listener]
         if (queryListeners != null) {
             if (listenerSupport is ListenerSupport.Remote) {
