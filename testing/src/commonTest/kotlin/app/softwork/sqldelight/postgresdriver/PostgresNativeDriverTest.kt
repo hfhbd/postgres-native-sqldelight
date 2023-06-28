@@ -253,20 +253,20 @@ class PostgresNativeDriverTest {
 
         val results = MutableStateFlow(0)
         val listener = Query.Listener { results.update { it + 1 } }
-        driver.addListener(listener, arrayOf("foo", "bar"))
+        driver.addListener("foo", "bar", listener = listener)
 
         val dbDelay = 2.seconds
         delay(dbDelay)
-        other.notifyListeners(arrayOf("foo"))
+        other.notifyListeners("foo")
 
-        other.notifyListeners(arrayOf("foo", "bar"))
-        other.notifyListeners(arrayOf("bar"))
+        other.notifyListeners("foo", "bar")
+        other.notifyListeners("bar")
 
         delay(dbDelay)
 
-        driver.removeListener(listener, arrayOf("foo", "bar"))
-        driver.notifyListeners(arrayOf("foo"))
-        driver.notifyListeners(arrayOf("bar"))
+        driver.removeListener("foo", "bar", listener = listener)
+        driver.notifyListeners("foo")
+        driver.notifyListeners("bar")
 
         delay(dbDelay)
         assertEquals(4, results.value)
@@ -298,20 +298,20 @@ class PostgresNativeDriverTest {
 
         val results = MutableStateFlow(0)
         val listener = Query.Listener { results.update { it + 1 } }
-        driver.addListener(listener, arrayOf("foo", "bar"))
+        driver.addListener("foo", "bar", listener = listener)
         runCurrent()
-        driver.notifyListeners(arrayOf("foo"))
+        driver.notifyListeners("foo")
         runCurrent()
-        driver.notifyListeners(arrayOf("foo", "bar"))
+        driver.notifyListeners("foo", "bar")
         runCurrent()
-        driver.notifyListeners(arrayOf("bar"))
+        driver.notifyListeners("bar")
         runCurrent()
 
-        driver.removeListener(listener, arrayOf("foo", "bar"))
+        driver.removeListener("foo", "bar", listener = listener)
         runCurrent()
-        driver.notifyListeners(arrayOf("foo"))
+        driver.notifyListeners("foo")
         runCurrent()
-        driver.notifyListeners(arrayOf("bar"))
+        driver.notifyListeners("bar")
         runCurrent()
 
         assertEquals(4, results.value)
