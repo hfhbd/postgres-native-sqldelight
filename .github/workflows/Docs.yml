@@ -38,7 +38,7 @@ jobs:
       - uses: gradle/gradle-build-action@v2
       - name: Generate Docs
         run: ./gradlew :dokkaHtmlMultiModule
-      - uses: actions/upload-pages-artifact@v1
+      - uses: actions/upload-pages-artifact@v2
         with:
           path: build/dokka/htmlMultiModule
       - name: Deploy to GitHub Pages
