@@ -322,7 +322,6 @@ public class PostgresNativeDriver(
             while (cursor.next().value) {
                 send(mapper(cursor))
             }
-            cursor.close()
         }
         awaitClose { 
             cursor.close()
