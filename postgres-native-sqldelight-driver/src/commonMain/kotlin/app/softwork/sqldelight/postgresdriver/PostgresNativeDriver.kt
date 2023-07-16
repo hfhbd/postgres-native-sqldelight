@@ -7,10 +7,7 @@ import kotlinx.cinterop.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import libpq.*
 
@@ -296,8 +293,8 @@ public class PostgresNativeDriver(
      * Each element of stdin can be up to 2 GB.
      */
     public fun copy(stdin: Sequence<String>): Long {
-        for (stdin in stdin) {
-            val status = PQputCopyData(conn, stdin, stdin.encodeToByteArray().size)
+        for (std in stdin) {
+            val status = PQputCopyData(conn, std, std.encodeToByteArray().size)
             check(status == 1) {
                 conn.error()
             }
@@ -317,12 +314,14 @@ public class PostgresNativeDriver(
         parameters: Int,
         fetchSize: Int = 1,
         binders: (PostgresPreparedStatement.() -> Unit)?
-    ): Flow<R> = flow {
+    ): Flow<R> = callbackFlow {
         val (result, cursorName) = prepareQuery(identifier, sql, parameters, binders)
-        RealCursor(result, cursorName, conn, fetchSize).use {
-            while (it.next().value) {
-                emit(mapper(it))
-            }
+        val cursor = RealCursor(result, cursorName, conn, fetchSize)
+        invokeOnClose { 
+            cursor.close()
+        }
+        while (cursor.next().value) {
+            send(mapper(cursor))
         }
     }
 
