@@ -4,9 +4,9 @@ import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
 import kotlinx.datetime.*
 import kotlinx.uuid.*
-import kotlin.time.*
 
 public class PostgresPreparedStatement internal constructor(private val parameters: Int) : SqlPreparedStatement {
+    @ExperimentalForeignApi
     internal fun values(scope: AutofreeScope): CValuesRef<CPointerVar<ByteVar>> = createValues(parameters) {
         value = when (val value = _values[it]) {
             null -> null

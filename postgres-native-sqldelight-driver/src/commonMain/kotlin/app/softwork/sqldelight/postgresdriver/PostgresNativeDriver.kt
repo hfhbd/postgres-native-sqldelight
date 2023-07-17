@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import libpq.*
 
+@OptIn(ExperimentalForeignApi::class)
 public class PostgresNativeDriver(
     private val conn: CPointer<PGconn>,
     private val listenerSupport: ListenerSupport
@@ -368,22 +369,26 @@ public class PostgresNativeDriver(
     }
 }
 
+@ExperimentalForeignApi
 private fun CPointer<PGconn>?.error(): String {
     val errorMessage = PQerrorMessage(this)!!.toKString()
     PQfinish(this)
     return errorMessage
 }
 
+@ExperimentalForeignApi
 internal fun CPointer<PGresult>?.clear() {
     PQclear(this)
 }
 
+@ExperimentalForeignApi
 internal fun CPointer<PGconn>.exec(sql: String) {
     val result = PQexec(this, sql)
     result.check(this)
     result.clear()
 }
 
+@ExperimentalForeignApi
 internal fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresult> {
     val status = PQresultStatus(this)
     check(status == PGRES_TUPLES_OK || status == PGRES_COMMAND_OK || status == PGRES_COPY_IN) {
@@ -392,6 +397,7 @@ internal fun CPointer<PGresult>?.check(conn: CPointer<PGconn>): CPointer<PGresul
     return this!!
 }
 
+@ExperimentalForeignApi
 private fun CPointer<PGconn>.escaped(value: String): String {
     val cString = PQescapeIdentifier(this, value, value.length.convert())
     val escaped = cString!!.toKString()
@@ -399,6 +405,7 @@ private fun CPointer<PGconn>.escaped(value: String): String {
     return escaped
 }
 
+@OptIn(ExperimentalForeignApi::class)
 public fun PostgresNativeDriver(
     host: String,
     database: String,

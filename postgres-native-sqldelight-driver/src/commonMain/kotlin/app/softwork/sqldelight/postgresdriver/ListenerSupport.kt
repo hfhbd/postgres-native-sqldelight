@@ -30,6 +30,7 @@ public sealed interface ListenerSupport {
     ) : ScopedListenerSupport {
         override val notificationScope: CoroutineScope = notificationScope + Job()
 
+        @ExperimentalForeignApi
         internal fun remoteListener(conn: CPointer<PGconn>): Flow<String> = channelFlow {
             val selector = SelectorManager()
 

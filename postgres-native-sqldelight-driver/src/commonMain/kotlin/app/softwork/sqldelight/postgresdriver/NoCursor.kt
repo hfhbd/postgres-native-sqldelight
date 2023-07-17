@@ -4,6 +4,7 @@ import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
 import libpq.*
 
+@ExperimentalForeignApi
 internal class NoCursor(
     result: CPointer<PGresult>
 ) : PostgresCursor(result), Closeable {

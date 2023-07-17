@@ -5,8 +5,8 @@ import kotlinx.cinterop.*
 import kotlinx.datetime.*
 import kotlinx.uuid.*
 import libpq.*
-import kotlin.time.*
 
+@OptIn(ExperimentalForeignApi::class)
 public sealed class PostgresCursor(
     internal var result: CPointer<PGresult>
 ) : SqlCursor {
