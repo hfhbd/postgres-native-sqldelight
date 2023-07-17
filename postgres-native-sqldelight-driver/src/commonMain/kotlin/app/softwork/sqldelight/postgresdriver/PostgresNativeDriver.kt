@@ -318,7 +318,7 @@ public class PostgresNativeDriver(
         val (result, cursorName) = prepareQuery(identifier, sql, parameters, binders)
         val cursor = RealCursor(result, cursorName, conn, fetchSize)
         try {
-            while (cursor.next().await()) {
+            while (cursor.next().value) {
                 emit(mapper(cursor))
             }
         } finally {
