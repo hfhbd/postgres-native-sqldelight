@@ -7,7 +7,6 @@ import kotlinx.cinterop.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import libpq.*
@@ -313,17 +312,16 @@ public class PostgresNativeDriver(
         sql: String,
         mapper: suspend (PostgresCursor) -> R,
         parameters: Int,
-        fetchSize: Int = 1,
+        fetchSize: Int = 10,
         binders: (PostgresPreparedStatement.() -> Unit)?
-    ): Flow<R> = callbackFlow {
+    ): Flow<R> = flow {
         val (result, cursorName) = prepareQuery(identifier, sql, parameters, binders)
         val cursor = RealCursor(result, cursorName, conn, fetchSize)
-        launch {
-            while (cursor.next().value) {
-                send(mapper(cursor))
+        try {
+            while (cursor.next().await()) {
+                emit(mapper(cursor))
             }
-        }
-        awaitClose { 
+        } finally {
             cursor.close()
         }
     }
