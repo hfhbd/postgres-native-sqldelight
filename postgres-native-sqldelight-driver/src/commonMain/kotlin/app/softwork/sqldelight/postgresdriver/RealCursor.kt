@@ -7,6 +7,7 @@ import libpq.*
 /**
  * Must be used inside a transaction!
  */
+@ExperimentalForeignApi
 internal class RealCursor(
     result: CPointer<PGresult>,
     private val name: String,
