@@ -2,7 +2,7 @@
 kotlin = "1.9.0"
 sqldelight = "2.0.0-rc02"
 idea = "222.4459.24"
-coroutines = "1.7.2"
+coroutines = "1.7.3"
 
 [libraries]
 sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" }
