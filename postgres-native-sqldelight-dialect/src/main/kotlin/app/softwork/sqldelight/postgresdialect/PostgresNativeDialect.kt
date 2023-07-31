@@ -86,7 +86,7 @@ private enum class PostgreSqlType(override val javaType: TypeName): DialectType 
     INTERVAL(ClassName("kotlinx.datetime", "DateTimePeriod")),
     UUID(ClassName("kotlinx.uuid", "UUID"));
 
-    override fun prepareStatementBinder(columnIndex: String, value: CodeBlock): CodeBlock {
+    override fun prepareStatementBinder(columnIndex: CodeBlock, value: CodeBlock): CodeBlock {
         return CodeBlock.builder()
             .add(
                 when (this) {
@@ -99,7 +99,7 @@ private enum class PostgreSqlType(override val javaType: TypeName): DialectType 
                     UUID -> "bindUUID"
                 }
             )
-            .add("($columnIndex, %L)\n", value)
+            .add("(%L, %L)\n", columnIndex, value)
             .build()
     }
 
