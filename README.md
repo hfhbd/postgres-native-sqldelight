@@ -15,8 +15,6 @@ You need `libpq` installed and available in your `$PATH`.
 This package is uploaded to MavenCentral and supports macOS and linuxX64.
 Windows is currently not supported.
 
-Supported SQLDelight version: 2.0.0-alpha05.
-
 ````kotlin
 repositories {
     mavenCentral()
@@ -26,7 +24,7 @@ dependencies {
     implementation("app.softwork:postgres-native-sqldelight-driver:LATEST")
 }
 
-// optional SQLDelight setup: requires 2.0.0-alpha05
+// optional SQLDelight setup:
 sqldelight {
     databases.register("NativePostgres") {
         dialect("app.softwork:postgres-native-sqldelight-dialect:LATEST")
@@ -49,10 +47,11 @@ val driver = PostgresNativeDriver(
 )
 ```
 
+### Listeners
+
 This driver supports local and remote listeners.
-Local listeners only notify this client, ideally for testing or using the database with only one client at a time with
-SQLDelight only.
-Remote listener support uses `NOTIFY` and `LISTEN`, so you can use this with multiple clients or with existing database
+Local listeners only notify this client, ideally for testing or using the database with only one client at a time.
+Remote listener support uses `NOTIFY` and `LISTEN`, so you can use this to sync multiple clients or with existing database
 triggers.
 SQLDelight uses and expects the table name as payload, but you can provide a mapper function.
 
@@ -69,35 +68,9 @@ The identifier is used to reuse prepared statements.
 driver.execute(identifier = null, sql = "INSERT INTO foo VALUES (42)", parameters = 0, binders = null)
 ```
 
-It also supports a real lazy cursor or a Flow. The `fetchSize` parameter defines how many rows are fetched at once:
+It also supports a real lazy cursor by using a `Flow`. The `fetchSize` parameter defines how many rows are fetched at once:
 
 ```kotlin
-val names: List<Simple> = driver.executeQueryWithNativeCursor(
-    identifier = null,
-    sql = "SELECT index, name, bytes FROM foo",
-    mapper = { cursor ->
-        // You need to call `next` and use the cursor to return your type, here it is a list.
-        
-        // Important, don't leak this cursor, eg by returning a Sequence,
-        // otherwise the cursor will be closed before fetching rows.
-        // If you need to use an async iterator, use the `Flow` overload, `executeQueryAsFlow`.
-        buildList {
-            while (cursor.next()) {
-                add(
-                    Simple(
-                        index = cursor.getLong(0)!!.toInt(),
-                        name = cursor.getString(1),
-                        byteArray = cursor.getBytes(2)
-                    )
-                )
-            }
-        }
-    },
-    parameters = 0,
-    fetchSize = 100,
-    binders = null
-)
-
 val namesFlow: Flow<Simple> = driver.executeQueryAsFlow(
     identifier = null,
     sql = "SELECT index, name, bytes FROM foo",
@@ -145,12 +118,6 @@ For compilers to find libpq you may need to set:
 ### Testing
 
 If you install libpq with homebrew, it will install the platform-specific artifact.
-
-| Host        | Supported test targets |
-|-------------|------------------------|
-| linux x64   | linux x64              |
-| macOS x64   | macOS x64              |
-| macOS arm64 | macOS arm64            |
 
 To test other platforms, eg. linux x64 on macOS, you need to install the platform-specific libpq of linux x64 too.
 
