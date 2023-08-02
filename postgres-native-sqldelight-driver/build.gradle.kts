@@ -29,6 +29,7 @@ kotlin {
     macosArm64 { config() }
     macosX64 { config() }
     linuxX64 { config() }
+    linuxArm64 { config() }
     // mingwX64 { config() }
 
     sourceSets {
