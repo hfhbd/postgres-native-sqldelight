@@ -102,18 +102,16 @@ Apache 2
 
 You need libpq installed: https://formulae.brew.sh/formula/libpq#default
 
-You have to add the compiler flags to your path too.
-The exact commands depend on your config, but you will get them during installing libpq with homebrew.
-
-Sample commands:
+You have to add the compiler flags to the [libpq.def](postgres-native-sqldelight-driver/src/nativeInterop/cinterop/libpq.def).
+The exact flags depend on your config, but you will get them during installing libpq with homebrew.
 
 ```
-If you need to have libpq first in your PATH, run:
-  echo 'export PATH="/home/linuxbrew/.linuxbrew/opt/libpq/bin:$PATH"' >> /home/runner/.bash_profile
 For compilers to find libpq you may need to set:
   export LDFLAGS="-L/home/linuxbrew/.linuxbrew/opt/libpq/lib"
   export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/libpq/include"
 ```
+
+For installation using homebrew, the default path is already added.
 
 ### Testing
 
