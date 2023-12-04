@@ -29,7 +29,7 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
 
     target.compilations.configureEach {
         kotlinOptions.allWarningsAsErrors = true
