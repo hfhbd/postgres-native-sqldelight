@@ -57,7 +57,7 @@ licensee {
 
 tasks.dokkaHtmlPartial {
     dokkaSourceSets.configureEach {
-        externalDocumentationLink("https://cashapp.github.io/sqldelight/2.0.0-alpha05/2.x/")
+        externalDocumentationLink("https://cashapp.github.io/sqldelight/2.0.0/2.x/")
         externalDocumentationLink(
             url = "https://kotlinlang.org/api/kotlinx-datetime/",
             packageListUrl = "https://kotlinlang.org/api/kotlinx-datetime/kotlinx-datetime/package-list",
