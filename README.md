@@ -1,4 +1,4 @@
-# Module postgres-native-sqldelight
+# Module postgres-native-sqldelight-driver
 
 A native Postgres driver using libpq.
 
