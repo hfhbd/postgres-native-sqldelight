@@ -372,7 +372,8 @@ public class PostgresNativeDriver(
 @ExperimentalForeignApi
 private fun CPointer<PGconn>?.error(): String {
     val errorMessage = PQerrorMessage(this)!!.toKString()
-    PQfinish(this)
+    // TODO("find out why this lien causes segmentation fault")
+    // PQfinish(this)
     return errorMessage
 }
 
