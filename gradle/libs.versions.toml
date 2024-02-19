@@ -16,7 +16,7 @@ coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", ve
 ktor-network = { module = "io.ktor:ktor-network", version = "2.3.8" }
 datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.5.0" }
 uuid = { module = "app.softwork:kotlinx-uuid-core", version = "0.0.22" }
-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version = "1.6.2" }
+serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version = "1.6.3" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
