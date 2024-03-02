@@ -5,6 +5,7 @@ volumes:
 
 services:
   app:
+    container_name: javadev
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,7 +13,7 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_HOSTNAME: db
+      POSTGRES_HOSTNAME: postgresdb
 
     volumes:
       - ../..:/workspaces:cached
@@ -22,6 +23,7 @@ services:
     network_mode: service:db
 
   db:
+    container_name: postgresdb
     image: postgres:latest
     restart: unless-stopped
     volumes:
@@ -30,6 +32,6 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      
+
     ports:
       - "5432:5432"
