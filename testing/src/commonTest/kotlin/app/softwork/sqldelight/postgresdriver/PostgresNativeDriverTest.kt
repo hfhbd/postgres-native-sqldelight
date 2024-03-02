@@ -208,7 +208,7 @@ class PostgresNativeDriverTest {
     @Test
     fun copyTest() {
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = "db",
             port = 5432,
             user = "postgres",
             database = "postgres",
