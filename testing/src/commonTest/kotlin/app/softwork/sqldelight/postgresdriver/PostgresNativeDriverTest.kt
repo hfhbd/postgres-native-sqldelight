@@ -189,7 +189,7 @@ class PostgresNativeDriverTest {
         }
         assertFailsWith<IllegalArgumentException> {
             PostgresNativeDriver(
-                host = "localhost",
+                host = "db",
                 user = "postgres",
                 database = "postgres",
                 password = "wrongPassword"
@@ -197,7 +197,7 @@ class PostgresNativeDriverTest {
         }
         assertFailsWith<IllegalArgumentException> {
             PostgresNativeDriver(
-                host = "localhost",
+                host = "db",
                 user = "wrongUser",
                 database = "postgres",
                 password = "password"

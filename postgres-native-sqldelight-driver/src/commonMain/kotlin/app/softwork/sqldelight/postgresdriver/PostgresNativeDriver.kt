@@ -424,8 +424,12 @@ public fun PostgresNativeDriver(
         pwd = password,
         pgoptions = options
     )
-    if (PQstatus(conn) == ConnStatusType.CONNECTION_BAD) {
+    val status = PQstatus(conn)
+    if (status == ConnStatusType.CONNECTION_BAD) {
         throw IllegalArgumentException(conn.error())
+    }
+    require(status == ConnStatusType.CONNECTION_OK) {
+        conn.error()
     }
     return PostgresNativeDriver(conn!!, listenerSupport = listenerSupport)
 }
