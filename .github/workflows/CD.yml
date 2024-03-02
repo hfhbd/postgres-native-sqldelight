@@ -20,6 +20,8 @@ jobs:
           java-version: 17
       - uses: gradle/gradle-build-action@v2
       - run: brew install libpq
+        env:
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: true
       - name: Publish
         run: ./gradlew -Pversion=$version -Dorg.gradle.parallel=false --no-configuration-cache publish closeAndReleaseStagingRepository
         env:
