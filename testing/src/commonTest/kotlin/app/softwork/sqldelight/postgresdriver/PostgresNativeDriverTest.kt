@@ -234,7 +234,7 @@ class PostgresNativeDriverTest {
     @Test
     fun remoteListenerTest() = runBlocking {
         val other = PostgresNativeDriver(
-            host = "localhost",
+            host = "db",
             port = 5432,
             user = "postgres",
             database = "postgres",
@@ -243,7 +243,7 @@ class PostgresNativeDriverTest {
         )
 
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = "db",
             port = 5432,
             user = "postgres",
             database = "postgres",
@@ -283,7 +283,7 @@ class PostgresNativeDriverTest {
         }
 
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = "db",
             port = 5432,
             user = "postgres",
             database = "postgres",
