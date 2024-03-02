@@ -10,6 +10,9 @@ plugins {
 
 val emptyJar by tasks.registering(Jar::class) { }
 
+val Project.isSnapshotVersion: Boolean
+    get() = version.toString().endsWith("SNAPSHOT")
+
 publishing {
     publications.configureEach {
         this as MavenPublication
@@ -34,23 +37,35 @@ publishing {
                     name.set("Philip Wedemann")
                     email.set("mybztg+mavencentral@icloud.com")
                 }
+                developer {
+                    id.set("Myshkouski")
+                    name.set("Alexei Myshkouski")
+                    email.set("alexeimyshkouski@gmail.com")
+                }
             }
             scm {
-                connection.set("scm:git://github.com/hfhbd/SqlDelightNativePostgres.git")
-                developerConnection.set("scm:git://github.com/hfhbd/SqlDelightNativePostgres.git")
-                url.set("https://github.com/hfhbd/SqlDelightNativePostgres")
+                connection.set("scm:git://github.com/Myshkouski/postgres-native-sqldelight.git")
+                developerConnection.set("scm:git://github.com/Myshkouski/postgres-native-sqldelight.git")
+                url.set("https://github.com/Myshkouski/postgres-native-sqldelight")
             }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "sonatype"
+            url = if (isSnapshotVersion) {
+                uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+            } else {
+                uri("https://s01.oss.sonatype.org/content/repositories/releases/")
+            }
+            credentials(PasswordCredentials::class)
         }
     }
 }
 
 signing {
-    val signingKey: String? by project
-    val signingPassword: String? by project
-    signingKey?.let {
-        useInMemoryPgpKeys(String(Base64.getDecoder().decode(it)).trim(), signingPassword)
-        sign(publishing.publications)
-    }
+    sign(publishing.publications)
 }
 
 // https://youtrack.jetbrains.com/issue/KT-46466

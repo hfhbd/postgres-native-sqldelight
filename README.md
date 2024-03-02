@@ -114,12 +114,54 @@ For compilers to find libpq you may need to set:
 For installation using homebrew, the default path is already added.
 
 ### Testing
-
+#### Using local machine
 If you install libpq with homebrew, it will install the platform-specific artifact.
 
 To test other platforms, eg. linux x64 on macOS, you need to install the platform-specific libpq of linux x64 too.
 
-To start the postgres instance, you can use docker:
 ```sh
 docker run -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
 ```
+
+#### Using Docker
+
+To build and test project run this commands:
+
+```sh
+docker compose up ubuntu-test-runtime
+docker compose up alpine-test-runtime
+```
+
+... and the same for [prebuilt images](https://hub.docker.com/r/myshkouski/kotlin-native-postgres-driver-testing/tags), on either `linux/amd64` or `linux/arm64` hosts.
+```sh
+docker compose up ubuntu-test-runtime-prebuilt
+docker compose up alpine-test-runtime-prebuilt
+```
+
+The output of `debugTest` binary should be:
+```
+alpine-test-runtime-1  | [==========] Running 5 tests from 1 test cases.
+alpine-test-runtime-1  | [----------] Global test environment set-up.
+alpine-test-runtime-1  | [----------] 5 tests from app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest
+alpine-test-runtime-1  | [ RUN      ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.simpleTest
+alpine-test-runtime-1  | [       OK ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.simpleTest (52 ms)
+alpine-test-runtime-1  | [ RUN      ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.wrongCredentials
+alpine-test-runtime-1  | [       OK ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.wrongCredentials (5015 ms)
+alpine-test-runtime-1  | [ RUN      ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.copyTest
+alpine-test-runtime-1  | [       OK ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.copyTest (16 ms)
+alpine-test-runtime-1  | [ RUN      ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.remoteListenerTest
+alpine-test-runtime-1  | [       OK ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.remoteListenerTest (6016 ms)
+alpine-test-runtime-1  | [ RUN      ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.localListenerTest
+alpine-test-runtime-1  | [       OK ] app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest.localListenerTest (7 ms)
+alpine-test-runtime-1  | [----------] 5 tests from app.softwork.sqldelight.postgresdriver.PostgresNativeDriverTest (11109 ms total)
+alpine-test-runtime-1  |
+alpine-test-runtime-1  | [----------] Global test environment tear-down
+alpine-test-runtime-1  | [==========] 5 tests from 1 test cases ran. (11109 ms total)
+alpine-test-runtime-1  | [  PASSED  ] 5 tests.
+alpine-test-runtime-1 exited with code 0
+```
+
+#### TODO:
+- [ ] add container for zero-config compiling dependent projects
+- [ ] setup alpine-based build container
+    

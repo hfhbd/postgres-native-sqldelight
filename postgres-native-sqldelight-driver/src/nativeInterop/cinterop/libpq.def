@@ -4,5 +4,16 @@ package = libpq
 #staticLibraries = libpq.a
 #libraryPaths = /opt/homebrew/opt/libpq/lib
 
-compilerOpts = -I/home/linuxbrew/.linuxbrew/opt/libpq/include -I/opt/homebrew/opt/libpq/include -I/usr/local/opt/libpq/include
-linkerOpts = -L/home/linuxbrew/.linuxbrew/opt/libpq/lib -L/opt/homebrew/opt/libpq/lib -L/usr/local/opt/libpq/lib -lpq
+linkerOpts = -lpq
+
+#linkerOpts.linux = -L/usr/lib
+#linkerOpts.linux_x64 = -L/usr/lib/x86_64-linux-gnu
+# No docs about linux_arm64? linux_aarch64?
+#linkerOpts.linux_??? = -L/usr/lib/aarch64-linux-gnu
+# Since Koltin/Native compiler for aarch64 is available on linux_x86_64 only, share /usr/lib/x86_64-linux-gnu between x86_64 and aarch64
+linkerOpts.linux = -L/usr/lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/aarch64-linux-gnu
+
+linkerOpts.osx = -L/opt/homebrew/opt/libpq/lib -L/usr/local/opt/libpq/lib
+
+compilerOpts.linux = -I/usr/include/postgresql
+compilerOpts.osx = -I/opt/homebrew/opt/libpq/include -I/usr/local/opt/libpq/include

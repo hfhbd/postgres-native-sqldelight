@@ -2,6 +2,8 @@ package app.softwork.sqldelight.postgresdriver
 
 import app.cash.sqldelight.Query
 import app.cash.sqldelight.db.QueryResult
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -9,6 +11,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
+import platform.posix.getenv
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
@@ -17,7 +21,7 @@ class PostgresNativeDriverTest {
     @Test
     fun simpleTest() = runTest {
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = getEnvAsString("POSTGRES_HOST") ?: "localhost",
             port = 5432,
             user = "postgres",
             database = "postgres",
@@ -189,7 +193,7 @@ class PostgresNativeDriverTest {
         }
         assertFailsWith<IllegalArgumentException> {
             PostgresNativeDriver(
-                host = "localhost",
+                host = getEnvAsString("POSTGRES_HOST") ?: "localhost",
                 user = "postgres",
                 database = "postgres",
                 password = "wrongPassword"
@@ -197,7 +201,7 @@ class PostgresNativeDriverTest {
         }
         assertFailsWith<IllegalArgumentException> {
             PostgresNativeDriver(
-                host = "localhost",
+                host = getEnvAsString("POSTGRES_HOST") ?: "localhost",
                 user = "wrongUser",
                 database = "postgres",
                 password = "password"
@@ -208,7 +212,7 @@ class PostgresNativeDriverTest {
     @Test
     fun copyTest() {
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = getEnvAsString("POSTGRES_HOST") ?: "localhost",
             port = 5432,
             user = "postgres",
             database = "postgres",
@@ -234,7 +238,7 @@ class PostgresNativeDriverTest {
     @Test
     fun remoteListenerTest() = runBlocking {
         val other = PostgresNativeDriver(
-            host = "localhost",
+            host = getEnvAsString("POSTGRES_HOST") ?: "localhost",
             port = 5432,
             user = "postgres",
             database = "postgres",
@@ -243,7 +247,7 @@ class PostgresNativeDriverTest {
         )
 
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = getEnvAsString("POSTGRES_HOST") ?: "localhost",
             port = 5432,
             user = "postgres",
             database = "postgres",
@@ -283,7 +287,7 @@ class PostgresNativeDriverTest {
         }
 
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = getEnvAsString("POSTGRES_HOST") ?: "localhost",
             port = 5432,
             user = "postgres",
             database = "postgres",
@@ -319,4 +323,11 @@ class PostgresNativeDriverTest {
 
         driver.close()
     }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun getEnvAsString(name: String): String? {
+    require(name.isNotBlank())
+    require(name.isNotEmpty())
+    return getenv(name)?.toKStringFromUtf8()?.takeUnless { it.isEmpty() }
 }

@@ -16,7 +16,7 @@ kotlin {
         }
     }
 
-    fun KotlinNativeTarget.config() {
+    fun KotlinNativeTarget.configure() {
         compilations.named("main") {
             cinterops {
                 register("libpq") {
@@ -26,10 +26,10 @@ kotlin {
         }
     }
 
-    macosArm64 { config() }
-    macosX64 { config() }
-    linuxX64 { config() }
-    linuxArm64 { config() }
+    linuxX64 { configure() }
+    linuxArm64 { configure() }
+    macosX64 { configure() }
+    macosArm64 { configure() }
     // mingwX64 { config() }
 
     sourceSets {

@@ -1,0 +1,73 @@
+version: "3.8"
+
+x-services:
+  test-runtime: &test-runtime
+    environment:
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+  test-runtime-info-cmd: &test-runtime-info-cmd
+    command: [ "uname -a", "printenv; cat /etc/*release*; ldconfig -p | grep libpq.so; ls -lh; file *;" ]
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    command: ["postgres", "-c", "log_statement=all", "-c", "log_destination=stderr"]
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: "pg_isready -U postgres"
+      interval: 10s
+      timeout: 3s
+      retries: 3
+  ubuntu-test-runtime:
+    <<: *test-runtime
+    build:
+      args:
+        RUNTIME_DISTRO: ubuntu
+      tags:
+        - myshkouski/kotlin-native-postgres-driver-testing:latest
+        - myshkouski/kotlin-native-postgres-driver-testing:ubuntu
+  alpine-test-runtime:
+    <<: *test-runtime
+    build:
+      args:
+        RUNTIME_DISTRO: alpine
+      tags:
+        - myshkouski/kotlin-native-postgres-driver-testing:alpine
+  ubuntu-test-runtime-info:
+    extends:
+      service: ubuntu-test-runtime
+    <<: *test-runtime-info-cmd
+  alpine-test-runtime-info:
+    extends:
+      service: alpine-test-runtime
+    <<: *test-runtime-info-cmd
+  ubuntu-test-runtime-prebuilt:
+    <<: *test-runtime
+    image: myshkouski/kotlin-native-postgres-driver-testing
+  alpine-test-runtime-prebuilt:
+    <<: *test-runtime
+    image: myshkouski/kotlin-native-postgres-driver-testing:alpine
+  ubuntu-test-runtime-prebuilt-info:
+    extends:
+      service: ubuntu-test-runtime-prebuilt
+    <<: *test-runtime-info-cmd
+  alpine-test-runtime-prebuilt-info:
+    extends:
+      service: alpine-test-runtime-prebuilt
+    <<: *test-runtime-info-cmd
+  ubuntu-sources:
+    build:
+      target: gradlew
+      args:
+        BUILDER_DISTRO: ubuntu
+#  TODO: not implemented, see Dockerfile for details
+#  alpine-sources:
+#    build:
+#      target: gradlew
+#      args:
+#        BUILDER_DISTRO: alpine
