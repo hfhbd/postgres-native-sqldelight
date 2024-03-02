@@ -18,7 +18,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 17
-      - uses: gradle/gradle-build-action@v2
+      - uses: gradle/actions/setup-gradle@v3
       - run: brew install libpq
       - name: Build with Gradle
         run: ./gradlew assemble
