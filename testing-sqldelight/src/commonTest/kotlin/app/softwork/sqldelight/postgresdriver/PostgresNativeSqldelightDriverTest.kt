@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 @ExperimentalCoroutinesApi
 class PostgresNativeSqldelightDriverTest {
     private val driver = PostgresNativeDriver(
-        host = "localhost",
+        host = "db",
         port = 5432,
         user = "postgres",
         database = "postgres",

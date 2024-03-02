@@ -5,15 +5,14 @@ volumes:
 
 services:
   app:
-    container_name: javadev
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
       POSTGRES_DB: postgres
-      POSTGRES_HOSTNAME: postgresdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOSTNAME: db
 
     volumes:
       - ../..:/workspaces:cached
@@ -22,20 +21,15 @@ services:
 
     network_mode: service:db
 
-    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
-    # (Adding the "ports" property to this file will not forward from a Codespace.)
-
   db:
-    container_name: postgresdb
     image: postgres:latest
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
-      # NOTE: POSTGRES_DB/USER/PASSWORD should match values in app container
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
       POSTGRES_DB: postgres
-
-    # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
-    # (Adding the "ports" property to this file will not forward from a Codespace.)
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      
+    ports:
+      - "5432:5432"
