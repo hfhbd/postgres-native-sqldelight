@@ -19,7 +19,6 @@ jobs:
       HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: true
 
     steps:
-      - run: ls /usr/local/opt
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
