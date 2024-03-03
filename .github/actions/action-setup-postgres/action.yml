@@ -47,12 +47,7 @@ runs:
           done
         elif [ "$RUNNER_OS" == "macOS" ]; then
           case "$(sw_vers -productVersion)" in
-            12.*)
-              echo "/usr/local/opt/postgresql@14/bin" >> $GITHUB_PATH
-              ;;
-            13.*)
-              # Unfortunately, the macOS 13 runner image doesn't come w/
-              # pre-installed PostgreSQL server.
+            12.*|13.*)
               brew install postgresql@14
               echo "/usr/local/opt/postgresql@14/bin" >> $GITHUB_PATH
               ;;
