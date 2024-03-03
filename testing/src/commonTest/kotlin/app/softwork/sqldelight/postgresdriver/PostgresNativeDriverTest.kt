@@ -2,6 +2,7 @@ package app.softwork.sqldelight.postgresdriver
 
 import app.cash.sqldelight.Query
 import app.cash.sqldelight.db.QueryResult
+import kotlinx.cinterop.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -9,20 +10,22 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import platform.posix.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalCoroutinesApi
 class PostgresNativeDriverTest {
+    private val driver = PostgresNativeDriver(
+        host = env("POSTGRES_HOSTNAME") ?: "localhost",
+        port = 5432,
+        user = env("POSTGRES_USER") ?: "postgres",
+        database = env("POSTGRES_DB") ?: "postgres",
+        password = env("POSTGRES_PASSWORD") ?: "password"
+    )
+
     @Test
     fun simpleTest() = runTest {
-        val driver = PostgresNativeDriver(
-            host = "localhost",
-            port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password"
-        )
         assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS baz;", parameters = 0).value)
         assertEquals(
             0,
@@ -182,38 +185,34 @@ class PostgresNativeDriverTest {
         assertFailsWith<IllegalArgumentException> {
             PostgresNativeDriver(
                 host = "wrongHost",
-                user = "postgres",
-                database = "postgres",
-                password = "password"
+                port = 5432,
+                user = env("POSTGRES_USER") ?: "postgres",
+                database = env("POSTGRES_DB") ?: "postgres",
+                password = env("POSTGRES_PASSWORD") ?: "password"
             )
         }
         assertFailsWith<IllegalArgumentException> {
             PostgresNativeDriver(
-                host = "localhost",
-                user = "postgres",
-                database = "postgres",
+                host = "wrongHost",
+                port = 5432,
+                user = env("POSTGRES_USER") ?: "postgres",
+                database = env("POSTGRES_DB") ?: "postgres",
                 password = "wrongPassword"
             )
         }
         assertFailsWith<IllegalArgumentException> {
             PostgresNativeDriver(
-                host = "localhost",
+                host = "wrongHost",
+                port = 5432,
                 user = "wrongUser",
-                database = "postgres",
-                password = "password"
+                database = env("POSTGRES_DB") ?: "postgres",
+                password = env("POSTGRES_PASSWORD") ?: "password"
             )
         }
     }
 
     @Test
     fun copyTest() {
-        val driver = PostgresNativeDriver(
-            host = "localhost",
-            port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password"
-        )
         assertEquals(0, driver.execute(null, "DROP TABLE IF EXISTS copying;", parameters = 0).value)
         assertEquals(0, driver.execute(null, "CREATE TABLE copying(a int primary key);", parameters = 0).value)
         driver.execute(-42, "COPY copying FROM STDIN (FORMAT CSV);", 0)
@@ -234,20 +233,20 @@ class PostgresNativeDriverTest {
     @Test
     fun remoteListenerTest() = runBlocking {
         val other = PostgresNativeDriver(
-            host = "localhost",
+            host = env("POSTGRES_HOSTNAME") ?: "localhost",
             port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password",
+            user = env("POSTGRES_USER") ?: "postgres",
+            database = env("POSTGRES_DB") ?: "postgres",
+            password = env("POSTGRES_PASSWORD") ?: "password",
             listenerSupport = ListenerSupport.Remote(this)
         )
 
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = env("POSTGRES_HOSTNAME") ?: "localhost",
             port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password",
+            user = env("POSTGRES_USER") ?: "postgres",
+            database = env("POSTGRES_DB") ?: "postgres",
+            password = env("POSTGRES_PASSWORD") ?: "password",
             listenerSupport = ListenerSupport.Remote(this)
         )
 
@@ -272,7 +271,6 @@ class PostgresNativeDriverTest {
         assertEquals(4, results.value)
 
         other.close()
-        driver.close()
     }
 
     @Test
@@ -283,11 +281,11 @@ class PostgresNativeDriverTest {
         }
 
         val driver = PostgresNativeDriver(
-            host = "localhost",
+            host = env("POSTGRES_HOSTNAME") ?: "localhost",
             port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password",
+            user = env("POSTGRES_USER") ?: "postgres",
+            database = env("POSTGRES_DB") ?: "postgres",
+            password = env("POSTGRES_PASSWORD") ?: "password",
             listenerSupport = ListenerSupport.Local(
                 this,
                 notifications,
@@ -316,7 +314,10 @@ class PostgresNativeDriverTest {
 
         assertEquals(4, results.value)
         assertEquals(listOf("foo", "foo", "bar", "bar"), notificationList.await())
-
-        driver.close()
     }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun env(name: String): String? {
+    return getenv(name)?.toKStringFromUtf8()?.takeUnless { it.isEmpty() }
 }

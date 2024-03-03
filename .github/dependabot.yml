@@ -13,3 +13,9 @@ updates:
     assignees:
       - "hfhbd"
     rebase-strategy: "disabled"
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    assignees:
+      - "hfhbd"
