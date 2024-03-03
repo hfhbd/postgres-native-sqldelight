@@ -19,8 +19,6 @@ jobs:
       HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: true
 
     steps:
-      - run: echo $RUNNER_OS
-      - run: echo "$(sw_vers -productVersion)"
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
