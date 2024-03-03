@@ -9,5 +9,15 @@
 
     "forwardPorts": [
         5432
-    ]
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "vscjava.vscode-gradle",
+                "ms-ossdata.vscode-postgresql",
+                "github.vscode-github-actions"
+            ]
+        }
+    }
 }
