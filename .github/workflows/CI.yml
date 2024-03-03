@@ -22,7 +22,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
-      - run: brew install postgresql@14
       - run: brew install libpq
       - uses: ./.github/actions/action-setup-postgres
         with:
