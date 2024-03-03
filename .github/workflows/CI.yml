@@ -31,7 +31,5 @@ jobs:
           dependency-graph: generate-and-submit
           gradle-home-cache-cleanup: true
       - run: ./gradlew assemble
-      - uses: ikalnytskyi/action-setup-postgres@v5
-        with:
-          password: password
+      - run: docker-compose --file .devcontainer/docker-compose.yml up -d db
       - run: ./gradlew build

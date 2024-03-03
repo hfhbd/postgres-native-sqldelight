@@ -25,6 +25,11 @@ services:
     container_name: postgresdb
     image: postgres:latest
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
