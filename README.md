@@ -1,4 +1,4 @@
-# Module postgres-native-sqldelight-driver
+# PostgreSQL native SQLDelight driver
 
 A native Postgres driver using libpq.
 
@@ -6,7 +6,8 @@ You can use the driver with [SQLDelight](https://github.com/cashapp/sqldelight),
 
 - [Source code](https://github.com/hfhbd/postgres-native-sqldelight)
 
-> Keep in mind, until now, this is only a single-threaded wrapper over libpq using 1 connection only. There is no connection pool nor multithread support (like JDBC or R2DBC).
+> Keep in mind, until now, this is only a single-threaded wrapper over libpq using 1 connection only. There is no
+> connection pool nor multithread support (like JDBC or R2DBC).
 
 ## Install
 
@@ -51,7 +52,8 @@ val driver = PostgresNativeDriver(
 
 This driver supports local and remote listeners.
 Local listeners only notify this client, ideally for testing or using the database with only one client at a time.
-Remote listener support uses `NOTIFY` and `LISTEN`, so you can use this to sync multiple clients or with existing database
+Remote listener support uses `NOTIFY` and `LISTEN`, so you can use this to sync multiple clients or with existing
+database
 triggers.
 SQLDelight uses and expects the table name as payload, but you can provide a mapper function.
 
@@ -68,7 +70,8 @@ The identifier is used to reuse prepared statements.
 driver.execute(identifier = null, sql = "INSERT INTO foo VALUES (42)", parameters = 0, binders = null)
 ```
 
-It also supports a real lazy cursor by using a `Flow`. The `fetchSize` parameter defines how many rows are fetched at once:
+It also supports a real lazy cursor by using a `Flow`. The `fetchSize` parameter defines how many rows are fetched at
+once:
 
 ```kotlin
 val namesFlow: Flow<Simple> = driver.executeQueryAsFlow(
@@ -100,10 +103,25 @@ Apache 2
 
 ## Contributing
 
-You need libpq installed: https://formulae.brew.sh/formula/libpq#default
+### Devcontainers
 
-You have to add the compiler flags to the [libpq.def](postgres-native-sqldelight-driver/src/nativeInterop/cinterop/libpq.def).
-The exact flags depend on your config, but you will get them during installing libpq with homebrew.
+Start the devcontainer, that's it.
+
+### Local
+
+#### docker compose
+
+This is the preferred local option. The `app` service contains the JVM as well as libpq.
+
+#### Manual
+
+You need to install `libpq`, eg using Homebrew: https://formulae.brew.sh/formula/libpq#default
+
+For installation using homebrew, the default path is already added.
+
+Otherwise, you have to add the compiler flags to
+the [libpq.def](postgres-native-sqldelight-driver/src/nativeInterop/cinterop/libpq.def).
+The exact flags depend on your config, for example:
 
 ```
 For compilers to find libpq you may need to set:
@@ -111,15 +129,14 @@ For compilers to find libpq you may need to set:
   export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/libpq/include"
 ```
 
-For installation using homebrew, the default path is already added.
+##### Testing
 
-### Testing
-
-If you install libpq with homebrew, it will install the platform-specific artifact.
+If you installed libpq with homebrew, it will install the platform-specific artifact.
 
 To test other platforms, eg. linux x64 on macOS, you need to install the platform-specific libpq of linux x64 too.
 
 To start the postgres instance, you can use docker:
+
 ```sh
 docker run -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
 ```

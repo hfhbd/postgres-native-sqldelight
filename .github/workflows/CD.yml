@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
       - name: Set environment for version
@@ -18,10 +18,10 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 17
-      - uses: gradle/gradle-build-action@v2
+      - uses: gradle/actions/setup-gradle@v3
       - run: brew install libpq
-      - name: Build with Gradle
-        run: ./gradlew assemble
+        env:
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: true
       - name: Publish
         run: ./gradlew -Pversion=$version -Dorg.gradle.parallel=false --no-configuration-cache publish closeAndReleaseStagingRepository
         env:

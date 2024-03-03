@@ -34,7 +34,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 17
-      - uses: gradle/gradle-build-action@v2
+      - uses: gradle/actions/setup-gradle@v3
       - name: Generate Docs
         run: ./gradlew :dokkaHtmlMultiModule
       - uses: actions/upload-pages-artifact@v3

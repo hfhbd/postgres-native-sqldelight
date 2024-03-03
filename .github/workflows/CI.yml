@@ -13,23 +13,25 @@ jobs:
       contents: write
     strategy:
       matrix:
-        os: [ 'ubuntu-latest', 'macos-latest' ]
+        os: [ 'ubuntu-latest', 'macos-14', 'macos-latest' ]
+
+    env:
+      HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: true
 
     steps:
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
       - run: brew install libpq
+      - uses: ./.github/actions/action-setup-postgres
+        with:
+          password: password
       - uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
           java-version: 17
-      - uses: gradle/gradle-build-action@v2
+      - uses: gradle/actions/setup-gradle@v3
         with:
-          dependency-graph: generate-and-submit
           gradle-home-cache-cleanup: true
       - run: ./gradlew assemble
-      - uses: ikalnytskyi/action-setup-postgres@v5
-        with:
-          password: password
       - run: ./gradlew build
