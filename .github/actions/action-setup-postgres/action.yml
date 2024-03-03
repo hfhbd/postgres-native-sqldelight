@@ -51,6 +51,7 @@ runs:
               # Unfortunately, the macOS 13 runner image doesn't come w/
               # pre-installed PostgreSQL server.
               brew install postgresql@14
+              echo "/opt/homebrew/opt/postgresql@14/bin" >> $GITHUB_PATH
               ;;
             14.*)
               brew install postgresql@16
