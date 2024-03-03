@@ -36,7 +36,7 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v3
       - name: Generate Docs
-        run: ./gradlew :dokkaHtmlMultiModule
+        run: ./gradlew :dokkaHtmlMultiModule --no-configuration-cache
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/dokka/htmlMultiModule
