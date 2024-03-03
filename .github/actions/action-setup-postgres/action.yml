@@ -47,8 +47,11 @@ runs:
           done
         elif [ "$RUNNER_OS" == "macOS" ]; then
           brew install postgresql@16
+          export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"
         fi
       shell: bash
+      env:
+        HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: "true"
 
     - name: Setup and start PostgreSQL
       run: |
