@@ -28,8 +28,9 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v3
         with:
-          dependency-graph: generate-and-submit
           gradle-home-cache-cleanup: true
       - run: ./gradlew assemble
-      - run: docker-compose --file .devcontainer/docker-compose.yml up -d db
+      - uses: ./.github/actions/action-setup-postgres
+        with:
+          password: password
       - run: ./gradlew build
