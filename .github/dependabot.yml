@@ -19,3 +19,9 @@ updates:
       interval: "daily"
     assignees:
       - "hfhbd"
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    assignees:
+      - "hfhbd"
