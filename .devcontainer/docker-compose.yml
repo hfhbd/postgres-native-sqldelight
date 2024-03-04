@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: javadev
+    # https://youtrack.jetbrains.com/issue/KT-36871/Support-Aarch64-Linux-as-a-host-for-the-Kotlin-Native
+    platform: "linux/amd64"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_HOSTNAME: postgresdb
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+
+    volumes:
+      - ../..:/workspaces:cached
+
+    command: sleep infinity
+
+    network_mode: service:db
+
+  db:
+    container_name: postgresdb
+    image: postgres:latest
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"

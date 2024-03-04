@@ -1,0 +1,12 @@
+{
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "features": {
+        "ghcr.io/devcontainers/features/sshd:1": {}
+    },
+
+    "forwardPorts": [
+        5432
+    ]
+}

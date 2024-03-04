@@ -1,22 +1,24 @@
 package app.softwork.sqldelight.postgresdriver
 
 import app.cash.sqldelight.coroutines.*
+import kotlinx.cinterop.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
 import kotlinx.datetime.*
 import kotlinx.uuid.*
+import platform.posix.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalCoroutinesApi
 class PostgresNativeSqldelightDriverTest {
     private val driver = PostgresNativeDriver(
-        host = "localhost",
+        host = env("POSTGRES_HOSTNAME") ?: "localhost",
         port = 5432,
-        user = "postgres",
-        database = "postgres",
-        password = "password"
+        user = env("POSTGRES_USER") ?: "postgres",
+        database = env("POSTGRES_DB") ?: "postgres",
+        password = env("POSTGRES_PASSWORD") ?: "password"
     )
 
     @Test
@@ -95,22 +97,22 @@ class PostgresNativeSqldelightDriverTest {
     @Test
     fun remoteListenerTest() = runTest(timeout = 10.seconds) {
         val client = PostgresNativeDriver(
-            host = "localhost",
+            host = env("POSTGRES_HOSTNAME") ?: "localhost",
             port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password",
+            user = env("POSTGRES_USER") ?: "postgres",
+            database = env("POSTGRES_DB") ?: "postgres",
+            password = env("POSTGRES_PASSWORD") ?: "password",
             listenerSupport = ListenerSupport.Remote(backgroundScope) {
                 it + it
             }
         )
 
         val server = PostgresNativeDriver(
-            host = "localhost",
+            host = env("POSTGRES_HOSTNAME") ?: "localhost",
             port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password",
+            user = env("POSTGRES_USER") ?: "postgres",
+            database = env("POSTGRES_DB") ?: "postgres",
+            password = env("POSTGRES_PASSWORD") ?: "password",
             listenerSupport = ListenerSupport.Remote(backgroundScope) {
                 it + it
             }
@@ -177,11 +179,11 @@ class PostgresNativeSqldelightDriverTest {
     @Test
     fun localListenerTest() = runTest(timeout = 10.seconds) {
         val client = PostgresNativeDriver(
-            host = "localhost",
+            host = env("POSTGRES_HOSTNAME") ?: "localhost",
             port = 5432,
-            user = "postgres",
-            database = "postgres",
-            password = "password",
+            user = env("POSTGRES_USER") ?: "postgres",
+            database = env("POSTGRES_DB") ?: "postgres",
+            password = env("POSTGRES_PASSWORD") ?: "password",
             listenerSupport = ListenerSupport.Local(backgroundScope)
         )
 
@@ -233,4 +235,9 @@ class PostgresNativeSqldelightDriverTest {
 
         client.close()
     }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun env(name: String): String? {
+    return getenv(name)?.toKStringFromUtf8()?.takeUnless { it.isEmpty() }
 }

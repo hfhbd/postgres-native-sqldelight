@@ -3,13 +3,13 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
-    includeBuild("build-logic")
+    includeBuild("gradle/build-logic")
 }
 
 plugins {
     id("MyRepos")
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
-    id("com.gradle.enterprise") version "3.15"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+    id("com.gradle.enterprise") version "3.16.2"
 }
 
 gradleEnterprise {
@@ -26,6 +26,7 @@ gradleEnterprise {
 rootProject.name = "postgres-native-sqldelight"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
 include(":postgres-native-sqldelight-driver")
 include(":postgres-native-sqldelight-dialect")
