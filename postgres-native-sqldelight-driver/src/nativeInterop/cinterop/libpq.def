@@ -2,7 +2,7 @@ headers = libpq-fe.h
 headerFilter = libpq-fe.h
 package = libpq
 #staticLibraries = libpq.a
-libraryPaths = /opt/homebrew/opt/libpq/lib /usr/include/postgresql
+#libraryPaths = /opt/homebrew/opt/libpq/lib /usr/include/postgresql
 
 compilerOpts = -I/home/linuxbrew/.linuxbrew/opt/libpq/include -I/opt/homebrew/opt/libpq/include -I/usr/local/opt/libpq/include -I/usr/include/postgresql -I/usr/include
 linkerOpts = -L/home/linuxbrew/.linuxbrew/opt/libpq/lib -L/opt/homebrew/opt/libpq/lib -L/usr/local/opt/libpq/lib -L/usr/lib64 -L/usr/lib -L/usr/lib/x86_64-linux-gnu -lpq
