@@ -1,5 +1,5 @@
 headers = libpq-fe.h
-headerFilter = *
+headerFilter = libpq-fe.h
 package = libpq
 #staticLibraries = libpq.a
 libraryPaths = /opt/homebrew/opt/libpq/lib /usr/include/postgresql
