@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.23"
+kotlin = "1.9.24"
 sqldelight = "2.0.2"
 idea = "222.4459.24"
 coroutines = "1.8.0"
