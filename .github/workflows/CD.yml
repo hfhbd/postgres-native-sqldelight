@@ -16,14 +16,14 @@ jobs:
         id: set-up-homebrew
       - uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
-          java-version: 17
+          distribution: 'temurin'
+          java-version: 21
       - uses: gradle/actions/setup-gradle@v3
       - run: brew install libpq
         env:
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: true
       - name: Publish
-        run: ./gradlew -Pversion=$version -Dorg.gradle.parallel=false --no-configuration-cache publish closeAndReleaseStagingRepository
+        run: ./gradlew -Pversion=$version -Dorg.gradle.parallel=false --no-configuration-cache publish closeAndReleaseStagingRepositories
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}

@@ -28,10 +28,11 @@ jobs:
           password: password
       - uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
-          java-version: 17
+          distribution: 'temurin'
+          java-version: 21
       - uses: gradle/actions/setup-gradle@v3
         with:
+          validate-wrappers: true
           gradle-home-cache-cleanup: true
       - run: ./gradlew assemble
       - run: ./gradlew build

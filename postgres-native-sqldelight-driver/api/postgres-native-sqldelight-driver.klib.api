@@ -1,0 +1,65 @@
+// Klib ABI Dump
+// Targets: [linuxArm64, linuxX64, macosArm64, macosX64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <app.softwork:postgres-native-sqldelight-driver>
+final class app.softwork.sqldelight.postgresdriver/PostgresNativeDriver : app.cash.sqldelight.db/SqlDriver { // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver|null[0]
+    constructor <init>(kotlinx.cinterop/CPointer<cnames.structs/pg_conn>, app.softwork.sqldelight.postgresdriver/ListenerSupport) // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.<init>|<init>(kotlinx.cinterop.CPointer<cnames.structs.pg_conn>;app.softwork.sqldelight.postgresdriver.ListenerSupport){}[0]
+    final fun <#A1: kotlin/Any?> executeQuery(kotlin/Int?, kotlin/String, kotlin/Function1<app.cash.sqldelight.db/SqlCursor, app.cash.sqldelight.db/QueryResult<#A1>>, kotlin/Int, kotlin/Function1<app.cash.sqldelight.db/SqlPreparedStatement, kotlin/Unit>?): app.cash.sqldelight.db/QueryResult<#A1> // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.executeQuery|executeQuery(kotlin.Int?;kotlin.String;kotlin.Function1<app.cash.sqldelight.db.SqlCursor,app.cash.sqldelight.db.QueryResult<0:0>>;kotlin.Int;kotlin.Function1<app.cash.sqldelight.db.SqlPreparedStatement,kotlin.Unit>?){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> executeQueryAsFlow(kotlin/Int?, kotlin/String, kotlin.coroutines/SuspendFunction1<app.softwork.sqldelight.postgresdriver/PostgresCursor, #A1>, kotlin/Int, kotlin/Int = ..., kotlin/Function1<app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement, kotlin/Unit>?): kotlinx.coroutines.flow/Flow<#A1> // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.executeQueryAsFlow|executeQueryAsFlow(kotlin.Int?;kotlin.String;kotlin.coroutines.SuspendFunction1<app.softwork.sqldelight.postgresdriver.PostgresCursor,0:0>;kotlin.Int;kotlin.Int;kotlin.Function1<app.softwork.sqldelight.postgresdriver.PostgresPreparedStatement,kotlin.Unit>?){0§<kotlin.Any?>}[0]
+    final fun addListener(kotlin/Array<out kotlin/String>..., app.cash.sqldelight/Query.Listener) // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.addListener|addListener(kotlin.Array<out|kotlin.String>...;app.cash.sqldelight.Query.Listener){}[0]
+    final fun close() // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.close|close(){}[0]
+    final fun copy(kotlin.sequences/Sequence<kotlin/String>): kotlin/Long // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.copy|copy(kotlin.sequences.Sequence<kotlin.String>){}[0]
+    final fun currentTransaction(): app.cash.sqldelight/Transacter.Transaction? // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.currentTransaction|currentTransaction(){}[0]
+    final fun execute(kotlin/Int?, kotlin/String, kotlin/Int, kotlin/Function1<app.cash.sqldelight.db/SqlPreparedStatement, kotlin/Unit>?): app.cash.sqldelight.db/QueryResult.Value<kotlin/Long> // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.execute|execute(kotlin.Int?;kotlin.String;kotlin.Int;kotlin.Function1<app.cash.sqldelight.db.SqlPreparedStatement,kotlin.Unit>?){}[0]
+    final fun newTransaction(): app.cash.sqldelight.db/QueryResult.Value<app.cash.sqldelight/Transacter.Transaction> // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.newTransaction|newTransaction(){}[0]
+    final fun notifyListeners(kotlin/Array<out kotlin/String>...) // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.notifyListeners|notifyListeners(kotlin.Array<out|kotlin.String>...){}[0]
+    final fun removeListener(kotlin/Array<out kotlin/String>..., app.cash.sqldelight/Query.Listener) // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver.removeListener|removeListener(kotlin.Array<out|kotlin.String>...;app.cash.sqldelight.Query.Listener){}[0]
+}
+final class app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement : app.cash.sqldelight.db/SqlPreparedStatement { // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement|null[0]
+    final fun bindBoolean(kotlin/Int, kotlin/Boolean?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindBoolean|bindBoolean(kotlin.Int;kotlin.Boolean?){}[0]
+    final fun bindBytes(kotlin/Int, kotlin/ByteArray?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindBytes|bindBytes(kotlin.Int;kotlin.ByteArray?){}[0]
+    final fun bindDate(kotlin/Int, kotlinx.datetime/LocalDate?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindDate|bindDate(kotlin.Int;kotlinx.datetime.LocalDate?){}[0]
+    final fun bindDouble(kotlin/Int, kotlin/Double?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindDouble|bindDouble(kotlin.Int;kotlin.Double?){}[0]
+    final fun bindInterval(kotlin/Int, kotlinx.datetime/DateTimePeriod?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindInterval|bindInterval(kotlin.Int;kotlinx.datetime.DateTimePeriod?){}[0]
+    final fun bindLocalTimestamp(kotlin/Int, kotlinx.datetime/LocalDateTime?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindLocalTimestamp|bindLocalTimestamp(kotlin.Int;kotlinx.datetime.LocalDateTime?){}[0]
+    final fun bindLong(kotlin/Int, kotlin/Long?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindLong|bindLong(kotlin.Int;kotlin.Long?){}[0]
+    final fun bindString(kotlin/Int, kotlin/String?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindString|bindString(kotlin.Int;kotlin.String?){}[0]
+    final fun bindTime(kotlin/Int, kotlinx.datetime/LocalTime?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindTime|bindTime(kotlin.Int;kotlinx.datetime.LocalTime?){}[0]
+    final fun bindTimestamp(kotlin/Int, kotlinx.datetime/Instant?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindTimestamp|bindTimestamp(kotlin.Int;kotlinx.datetime.Instant?){}[0]
+    final fun bindUUID(kotlin/Int, kotlinx.uuid/UUID?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindUUID|bindUUID(kotlin.Int;kotlinx.uuid.UUID?){}[0]
+}
+final fun app.softwork.sqldelight.postgresdriver/PostgresNativeDriver(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/Int = ..., kotlin/String? = ..., app.softwork.sqldelight.postgresdriver/ListenerSupport = ...): app.softwork.sqldelight.postgresdriver/PostgresNativeDriver // app.softwork.sqldelight.postgresdriver/PostgresNativeDriver|PostgresNativeDriver(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.Int;kotlin.String?;app.softwork.sqldelight.postgresdriver.ListenerSupport){}[0]
+sealed class app.softwork.sqldelight.postgresdriver/PostgresCursor : app.cash.sqldelight.db/SqlCursor { // app.softwork.sqldelight.postgresdriver/PostgresCursor|null[0]
+    constructor <init>(kotlinx.cinterop/CPointer<cnames.structs/pg_result>) // app.softwork.sqldelight.postgresdriver/PostgresCursor.<init>|<init>(kotlinx.cinterop.CPointer<cnames.structs.pg_result>){}[0]
+    final fun getDate(kotlin/Int): kotlinx.datetime/LocalDate? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getDate|getDate(kotlin.Int){}[0]
+    final fun getInterval(kotlin/Int): kotlinx.datetime/DateTimePeriod? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getInterval|getInterval(kotlin.Int){}[0]
+    final fun getLocalTimestamp(kotlin/Int): kotlinx.datetime/LocalDateTime? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getLocalTimestamp|getLocalTimestamp(kotlin.Int){}[0]
+    final fun getTime(kotlin/Int): kotlinx.datetime/LocalTime? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getTime|getTime(kotlin.Int){}[0]
+    final fun getTimestamp(kotlin/Int): kotlinx.datetime/Instant? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getTimestamp|getTimestamp(kotlin.Int){}[0]
+    final fun getUUID(kotlin/Int): kotlinx.uuid/UUID? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getUUID|getUUID(kotlin.Int){}[0]
+    open fun getBoolean(kotlin/Int): kotlin/Boolean? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getBoolean|getBoolean(kotlin.Int){}[0]
+    open fun getBytes(kotlin/Int): kotlin/ByteArray? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getBytes|getBytes(kotlin.Int){}[0]
+    open fun getDouble(kotlin/Int): kotlin/Double? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getDouble|getDouble(kotlin.Int){}[0]
+    open fun getLong(kotlin/Int): kotlin/Long? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getLong|getLong(kotlin.Int){}[0]
+    open fun getString(kotlin/Int): kotlin/String? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getString|getString(kotlin.Int){}[0]
+}
+sealed interface app.softwork.sqldelight.postgresdriver/ListenerSupport { // app.softwork.sqldelight.postgresdriver/ListenerSupport|null[0]
+    final class Local : app.softwork.sqldelight.postgresdriver/ScopedListenerSupport { // app.softwork.sqldelight.postgresdriver/ListenerSupport.Local|null[0]
+        constructor <init>(kotlinx.coroutines/CoroutineScope, kotlinx.coroutines.flow/Flow<kotlin/String>, kotlin.coroutines/SuspendFunction1<kotlin/String, kotlin/Unit>) // app.softwork.sqldelight.postgresdriver/ListenerSupport.Local.<init>|<init>(kotlinx.coroutines.CoroutineScope;kotlinx.coroutines.flow.Flow<kotlin.String>;kotlin.coroutines.SuspendFunction1<kotlin.String,kotlin.Unit>){}[0]
+        final val notificationScope // app.softwork.sqldelight.postgresdriver/ListenerSupport.Local.notificationScope|{}notificationScope[0]
+            final fun <get-notificationScope>(): kotlinx.coroutines/CoroutineScope // app.softwork.sqldelight.postgresdriver/ListenerSupport.Local.notificationScope.<get-notificationScope>|<get-notificationScope>(){}[0]
+    }
+    final class Remote : app.softwork.sqldelight.postgresdriver/ScopedListenerSupport { // app.softwork.sqldelight.postgresdriver/ListenerSupport.Remote|null[0]
+        constructor <init>(kotlinx.coroutines/CoroutineScope, kotlin/Function1<kotlin/String, kotlin/String> = ...) // app.softwork.sqldelight.postgresdriver/ListenerSupport.Remote.<init>|<init>(kotlinx.coroutines.CoroutineScope;kotlin.Function1<kotlin.String,kotlin.String>){}[0]
+        final val notificationScope // app.softwork.sqldelight.postgresdriver/ListenerSupport.Remote.notificationScope|{}notificationScope[0]
+            final fun <get-notificationScope>(): kotlinx.coroutines/CoroutineScope // app.softwork.sqldelight.postgresdriver/ListenerSupport.Remote.notificationScope.<get-notificationScope>|<get-notificationScope>(){}[0]
+    }
+    final object Companion { // app.softwork.sqldelight.postgresdriver/ListenerSupport.Companion|null[0]
+        final fun Local(kotlinx.coroutines/CoroutineScope): app.softwork.sqldelight.postgresdriver/ListenerSupport.Local // app.softwork.sqldelight.postgresdriver/ListenerSupport.Companion.Local|Local(kotlinx.coroutines.CoroutineScope){}[0]
+    }
+    final object None : app.softwork.sqldelight.postgresdriver/ListenerSupport // app.softwork.sqldelight.postgresdriver/ListenerSupport.None|null[0]
+}
