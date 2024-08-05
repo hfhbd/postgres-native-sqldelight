@@ -22,8 +22,6 @@ jobs:
           distribution: 'temurin'
           java-version: 21
       - uses: gradle/actions/dependency-submission@v4
-        with:
-          cache-encryption-key: ${{ secrets.CC }}
 
   dependency-review:
     runs-on: ubuntu-latest
