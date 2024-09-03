@@ -11,10 +11,10 @@ plugins {
 
 kotlin {
     explicitApi()
-    sourceSets {
-        configureEach {
-            languageSettings.progressiveMode = true
-        }
+
+    compilerOptions {
+        progressiveMode.set(true)
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
 
     fun KotlinNativeTarget.config() {
@@ -40,7 +40,6 @@ kotlin {
                 api(libs.coroutines.core)
                 api(libs.sqldelight.runtime)
                 api(libs.datetime)
-                api(libs.uuid)
             }
         }
         commonTest {
