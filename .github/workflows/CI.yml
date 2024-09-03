@@ -13,7 +13,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        os: [ 'ubuntu-latest', 'macos-14', 'macos-latest' ]
+        os: [ 'ubuntu-latest', 'ubuntu-24.04', 'macos-latest' ]
 
     env:
       HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: true
