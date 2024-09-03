@@ -54,7 +54,7 @@ final class app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement : a
     final fun bindString(kotlin/Int, kotlin/String?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindString|bindString(kotlin.Int;kotlin.String?){}[0]
     final fun bindTime(kotlin/Int, kotlinx.datetime/LocalTime?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindTime|bindTime(kotlin.Int;kotlinx.datetime.LocalTime?){}[0]
     final fun bindTimestamp(kotlin/Int, kotlinx.datetime/Instant?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindTimestamp|bindTimestamp(kotlin.Int;kotlinx.datetime.Instant?){}[0]
-    final fun bindUUID(kotlin/Int, kotlinx.uuid/UUID?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindUUID|bindUUID(kotlin.Int;kotlinx.uuid.UUID?){}[0]
+    final fun bindUuid(kotlin/Int, kotlin.uuid/Uuid?) // app.softwork.sqldelight.postgresdriver/PostgresPreparedStatement.bindUuid|bindUuid(kotlin.Int;kotlin.uuid.Uuid?){}[0]
 }
 
 sealed class app.softwork.sqldelight.postgresdriver/PostgresCursor : app.cash.sqldelight.db/SqlCursor { // app.softwork.sqldelight.postgresdriver/PostgresCursor|null[0]
@@ -63,7 +63,7 @@ sealed class app.softwork.sqldelight.postgresdriver/PostgresCursor : app.cash.sq
     final fun getLocalTimestamp(kotlin/Int): kotlinx.datetime/LocalDateTime? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getLocalTimestamp|getLocalTimestamp(kotlin.Int){}[0]
     final fun getTime(kotlin/Int): kotlinx.datetime/LocalTime? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getTime|getTime(kotlin.Int){}[0]
     final fun getTimestamp(kotlin/Int): kotlinx.datetime/Instant? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getTimestamp|getTimestamp(kotlin.Int){}[0]
-    final fun getUUID(kotlin/Int): kotlinx.uuid/UUID? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getUUID|getUUID(kotlin.Int){}[0]
+    final fun getUuid(kotlin/Int): kotlin.uuid/Uuid? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getUuid|getUuid(kotlin.Int){}[0]
     open fun getBoolean(kotlin/Int): kotlin/Boolean? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getBoolean|getBoolean(kotlin.Int){}[0]
     open fun getBytes(kotlin/Int): kotlin/ByteArray? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getBytes|getBytes(kotlin.Int){}[0]
     open fun getDouble(kotlin/Int): kotlin/Double? // app.softwork.sqldelight.postgresdriver/PostgresCursor.getDouble|getDouble(kotlin.Int){}[0]
