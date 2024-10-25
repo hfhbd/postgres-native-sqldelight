@@ -23,7 +23,7 @@ jobs:
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
       - run: brew install libpq
-      - uses: ikalnytskyi/action-setup-postgres@v6
+      - uses: ikalnytskyi/action-setup-postgres@v7
         with:
           password: password
       - uses: actions/setup-java@v4
