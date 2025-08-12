@@ -19,7 +19,7 @@ jobs:
       HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
       - run: brew install libpq

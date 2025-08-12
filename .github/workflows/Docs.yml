@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - uses: actions/configure-pages@v5
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
       - run: brew install libpq
