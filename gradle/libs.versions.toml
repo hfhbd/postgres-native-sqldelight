@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.1.21"
-sqldelight = "2.0.2"
+sqldelight = "2.1.0"
 idea = "222.4459.24"
 coroutines = "1.10.2"
 
