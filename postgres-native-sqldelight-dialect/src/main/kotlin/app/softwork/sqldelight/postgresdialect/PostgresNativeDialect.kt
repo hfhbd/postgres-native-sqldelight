@@ -84,7 +84,7 @@ private enum class PostgreSqlType(override val javaType: TypeName): DialectType 
     TIMESTAMP(ClassName("kotlinx.datetime", "LocalDateTime")),
     TIMESTAMP_TIMEZONE(ClassName("kotlinx.datetime", "Instant")),
     INTERVAL(ClassName("kotlinx.datetime", "DateTimePeriod")),
-    UUID(ClassName("kotlinx.uuid", "UUID"));
+    UUID(ClassName("kotlin.uuid", "Uuid"));
 
     override fun prepareStatementBinder(columnIndex: CodeBlock, value: CodeBlock): CodeBlock {
         return CodeBlock.builder()
@@ -96,7 +96,7 @@ private enum class PostgreSqlType(override val javaType: TypeName): DialectType 
                     TIMESTAMP -> "bindLocalTimestamp"
                     TIMESTAMP_TIMEZONE -> "bindTimestamp"
                     INTERVAL -> "bindInterval"
-                    UUID -> "bindUUID"
+                    UUID -> "bindUuid"
                 }
             )
             .add("(%L, %L)\n", columnIndex, value)
@@ -112,7 +112,7 @@ private enum class PostgreSqlType(override val javaType: TypeName): DialectType 
                 TIMESTAMP -> "$cursorName.getLocalTimestamp($columnIndex)"
                 TIMESTAMP_TIMEZONE -> "$cursorName.getTimestamp($columnIndex)"
                 INTERVAL -> "$cursorName.getInterval($columnIndex)"
-                UUID -> "$cursorName.getUUID($columnIndex)"
+                UUID -> "$cursorName.getUuid($columnIndex)"
             }
         )
     }

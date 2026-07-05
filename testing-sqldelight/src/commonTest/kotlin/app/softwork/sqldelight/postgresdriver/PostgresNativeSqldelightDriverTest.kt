@@ -6,7 +6,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
 import kotlinx.datetime.*
-import kotlinx.uuid.*
+import kotlin.uuid.*
 import platform.posix.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
@@ -35,7 +35,7 @@ class PostgresNativeSqldelightDriverTest {
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
             interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242000),
-            uuid = UUID.NIL
+            uuid = Uuid.NIL
         )
         queries.create(
             a = foo.a,
@@ -69,7 +69,7 @@ class PostgresNativeSqldelightDriverTest {
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
             interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242000),
-            uuid = UUID.NIL,
+            uuid = Uuid.NIL,
         )
         assertEquals(foo, queries.get().executeAsOne())
     }
@@ -129,7 +129,7 @@ class PostgresNativeSqldelightDriverTest {
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
             interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242),
-            uuid = UUID.NIL
+            uuid = Uuid.NIL
         )
         val userQueries = db.usersQueries
         val id = userQueries.insertAndGet("foo", "foo", "foo", "", 42).executeAsOne()
@@ -198,7 +198,7 @@ class PostgresNativeSqldelightDriverTest {
             timestamp = LocalDateTime(2014, Month.AUGUST, 1, 12, 1, 2, 0),
             instant = Instant.fromEpochMilliseconds(10L),
             interval = DateTimePeriod(42, 42, 42, 42, 42, 42, 424242),
-            uuid = UUID.NIL
+            uuid = Uuid.NIL
         )
         val userQueries = db.usersQueries
         val id = userQueries.insertAndGet("foo", "foo", "foo", "", 42).executeAsOne()

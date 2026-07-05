@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 plugins {
     kotlin("multiplatform")
+    id("org.jetbrains.kotlinx.binary-compatibility-validator")
     id("app.cash.licensee")
     id("repos")
     id("publish")
@@ -10,10 +11,10 @@ plugins {
 
 kotlin {
     explicitApi()
-    sourceSets {
-        configureEach {
-            languageSettings.progressiveMode = true
-        }
+
+    compilerOptions {
+        progressiveMode.set(true)
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
 
     fun KotlinNativeTarget.config() {
@@ -39,13 +40,12 @@ kotlin {
                 api(libs.coroutines.core)
                 api(libs.sqldelight.runtime)
                 api(libs.datetime)
-                api(libs.uuid)
             }
         }
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
             }
         }
     }
@@ -64,5 +64,11 @@ tasks.dokkaHtmlPartial {
         )
         externalDocumentationLink("https://uuid.softwork.app")
         externalDocumentationLink("https://kotlinlang.org/api/kotlinx.coroutines/")
+    }
+}
+
+apiValidation {
+    klib {
+        enabled = true
     }
 }

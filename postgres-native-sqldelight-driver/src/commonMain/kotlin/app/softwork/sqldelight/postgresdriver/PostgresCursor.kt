@@ -3,8 +3,8 @@ package app.softwork.sqldelight.postgresdriver
 import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
 import kotlinx.datetime.*
-import kotlinx.uuid.*
 import libpq.*
+import kotlin.uuid.*
 
 @OptIn(ExperimentalForeignApi::class)
 public sealed class PostgresCursor(
@@ -67,5 +67,5 @@ public sealed class PostgresCursor(
     }
 
     public fun getInterval(index: Int): DateTimePeriod? = getString(index)?.let { DateTimePeriod.parse(it) }
-    public fun getUUID(index: Int): UUID? = getString(index)?.toUUID()
+    public fun getUuid(index: Int): Uuid? = getString(index)?.let { Uuid.parse(it) }
 }

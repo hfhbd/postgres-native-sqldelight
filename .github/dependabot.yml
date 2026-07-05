@@ -20,7 +20,7 @@ updates:
     assignees:
       - "hfhbd"
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "/.devcontainer"
     schedule:
       interval: "daily"
     assignees:

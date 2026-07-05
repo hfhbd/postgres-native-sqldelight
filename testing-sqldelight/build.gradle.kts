@@ -6,6 +6,9 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+    }
 
     when (HostManager.host) {
         KonanTarget.LINUX_X64 -> linuxX64()

@@ -3,7 +3,7 @@ package app.softwork.sqldelight.postgresdriver
 import app.cash.sqldelight.db.*
 import kotlinx.cinterop.*
 import kotlinx.datetime.*
-import kotlinx.uuid.*
+import kotlin.uuid.*
 
 public class PostgresPreparedStatement internal constructor(private val parameters: Int) : SqlPreparedStatement {
     @ExperimentalForeignApi
@@ -80,7 +80,7 @@ public class PostgresPreparedStatement internal constructor(private val paramete
         bind(index, value?.toString(), intervalOid)
     }
 
-    public fun bindUUID(index: Int, value: UUID?) {
+    public fun bindUuid(index: Int, value: Uuid?) {
         bind(index, value?.toString(), uuidOid)
     }
 
